@@ -53,7 +53,6 @@ export default function ChordsPanel({
     setFocusedIndex(null);
   };
 
-  // Sync display when chords/mode/key change
   useEffect(() => {
     Object.keys(inputRefs.current).forEach((key) => {
       const index = parseInt(key, 10);
@@ -67,7 +66,6 @@ export default function ChordsPanel({
     });
   }, [chords, chordDisplayMode, musicKey, focusedIndex]);
 
-  // Initial mount sync
   useEffect(() => {
     Object.keys(inputRefs.current).forEach((key) => {
       const index = parseInt(key, 10);
@@ -120,9 +118,9 @@ export default function ChordsPanel({
         style={{
           background: theme.panel,
           border: `1px solid ${theme.border}`,
-          height: "380px",
+          height: "380px", // 👈 FIXED HEIGHT - scrollable container
           overflowY: "auto",
-          overflowX: "hidden", // 👈 prevent horizontal overflow of the panel
+          overflowX: "hidden",
           resize: "vertical",
           textAlign: "left",
           padding: "12px 12px",
@@ -201,7 +199,6 @@ export default function ChordsPanel({
                     {i + 1}
                   </span>
                 )}
-                {/* 👇 minWidth: 0 allows this flex child to shrink */}
                 <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
                   <div
                     className="chord-input"
@@ -217,7 +214,7 @@ export default function ChordsPanel({
                     style={{
                       display: "block",
                       width: "100%",
-                      maxWidth: "100%", // 👈 ensure it never exceeds parent
+                      maxWidth: "100%",
                       border: "none",
                       outline: "none",
                       background:
@@ -226,17 +223,18 @@ export default function ChordsPanel({
                       fontSize: `${editorFontSize}px`,
                       fontWeight: 600,
                       color: chordColor,
-                      padding: "2px 4px", // 👈 no negative margin
+                      padding: "2px 4px",
                       textAlign: "left",
                       minHeight: `${editorFontSize * 1.2}px`,
                       letterSpacing: "0.02em",
-                      whiteSpace: "pre",
+                      whiteSpace: "pre-wrap", // fix overflow
+                      wordBreak: "break-word", // fix overflow
                       fontFamily:
                         "var(--font-mono, 'JetBrains Mono', monospace)",
                       cursor: "text",
                       transition: "background 0.15s ease",
-                      overflowX: "auto", // 👈 scroll long chord lines
-                      boxSizing: "border-box", // 👈 padding included in width
+                      overflowX: "hidden",
+                      boxSizing: "border-box",
                     }}
                   />
                   <div

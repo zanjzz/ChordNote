@@ -39,9 +39,9 @@ export default function ControlsBar({
         flexWrap: "wrap",
         gap: "12px 16px",
         alignItems: "center",
-        padding: "8px 0",
+        padding: "30px 0 30px",
         borderBottom: `1px solid ${theme.borderSoft}`,
-        marginBottom: "16px",
+        marginBottom: "24px", 
       }}
     >
       {/* Transpose */}
@@ -63,9 +63,10 @@ export default function ControlsBar({
           Transpose
         </span>
         <StepBtn
+          className="chord-btn-step"
           theme={theme}
           onClick={() => handleTranspose(-1)}
-          icon={<Minus size={12} />}
+          icon={<Minus size={14} />}
         />
         <span
           style={{
@@ -79,9 +80,10 @@ export default function ControlsBar({
           {transposeOffset > 0 ? `+${transposeOffset}` : transposeOffset}
         </span>
         <StepBtn
+          className="chord-btn-step"
           theme={theme}
           onClick={() => handleTranspose(1)}
-          icon={<Plus size={12} />}
+          icon={<Plus size={14} />}
         />
       </div>
 
@@ -104,11 +106,12 @@ export default function ControlsBar({
           Size
         </span>
         <StepBtn
+          className="chord-btn-step"
           theme={theme}
           onClick={() =>
             setEditorFontSize((s) => clamp(s - 1, EDITOR_MIN, EDITOR_MAX))
           }
-          icon={<Minus size={12} />}
+          icon={<Minus size={14} />}
         />
         <span
           style={{
@@ -121,11 +124,12 @@ export default function ControlsBar({
           {editorFontSize}
         </span>
         <StepBtn
+          className="chord-btn-step"
           theme={theme}
           onClick={() =>
             setEditorFontSize((s) => clamp(s + 1, EDITOR_MIN, EDITOR_MAX))
           }
-          icon={<Plus size={12} />}
+          icon={<Plus size={14} />}
         />
       </div>
 

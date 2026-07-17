@@ -9,7 +9,7 @@ export default function LyricsPanel({
   setLyrics,
   editorFontSize,
   addSection,
-  chordColor, // kept for the Check button only
+  chordColor,
   showLineNumbers,
 }) {
   const [customOpen, setCustomOpen] = useState(false);
@@ -115,7 +115,8 @@ export default function LyricsPanel({
           className="chord-lyrics-textarea"
           style={{
             width: "100%",
-            minHeight: "380px",
+            minHeight: "380px", // fixed → min-height for safety
+            height: "auto",
             resize: "vertical",
             background: theme.panel,
             border: `1px solid ${theme.border}`,
@@ -213,7 +214,6 @@ export default function LyricsPanel({
                 width: "120px",
               }}
             />
-            {/* Check button still uses chordColor as a subtle accent */}
             <button
               onClick={submitCustomSection}
               style={{

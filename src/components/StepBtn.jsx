@@ -1,9 +1,10 @@
 // src/components/StepBtn.jsx
 import React from "react";
 
-export default function StepBtn({ theme, onClick, icon, disabled }) {
+export default function StepBtn({ theme, onClick, icon, disabled, className }) {
   return (
     <button
+      className={className}
       onClick={onClick}
       disabled={disabled}
       style={{

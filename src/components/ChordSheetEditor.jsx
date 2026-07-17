@@ -152,7 +152,7 @@ export default function ChordSheetEditor() {
     return saved || initialState.chordDisplayMode || "letters";
   });
   const [savedSongs, setSavedSongs] = useState(readSavedSongsFromStorage);
-  const [copyFeedback, setCopyFeedback] = useState(null); // 👈 Added missing state
+  const [copyFeedback, setCopyFeedback] = useState(null);
 
   // ---- Modal states ----
   const [toast, setToast] = useState({ visible: false, message: "", type: "" });
@@ -630,6 +630,49 @@ export default function ChordSheetEditor() {
           from { transform: scaleX(1); }
           to { transform: scaleX(0); }
         }
+
+        /* ---------- MOBILE OVERRIDES ONLY ---------- */
+        @media (max-width: 768px) {
+          .chord-meta-input {
+            padding: 12px 14px !important;
+            font-size: 16px !important;
+            min-height: 44px !important;
+          }
+          .chord-btn-step {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .chord-action-bar > button {
+            padding: 14px 10px !important;
+            font-size: 14px !important;
+            min-height: 48px !important;
+          }
+          .chord-controls-wrap {
+            gap: 16px !important;
+          }
+          .chord-top-bar {
+            gap: 16px !important;
+          }
+          .chord-panel {
+            height: 300px !important;
+            min-height: 300px !important;
+          }
+          .chord-lyrics-textarea {
+            min-height: 300px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .chord-action-bar > button {
+            padding: 12px 8px !important;
+            font-size: 12px !important;
+            flex-direction: row !important;
+            gap: 6px !important;
+          }
+          .chord-meta-grid {
+            gap: 12px !important;
+          }
+        }
       `}</style>
 
       <TopBar
@@ -728,16 +771,11 @@ export default function ChordSheetEditor() {
         />
       </div>
 
-      {/* Bottom Action Bar */}
+      {/* Bottom Action Bar - unchanged desktop layout */}
       <div
         className="chord-action-bar"
         style={{
           marginTop: "20px",
-          display: "flex",
-          flexWrap: "nowrap",
-          gap: "10px",
-          justifyContent: "flex-end",
-          alignItems: "center",
         }}
       >
         <button
