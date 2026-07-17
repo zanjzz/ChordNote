@@ -49,7 +49,7 @@ export default function SavedSongsModal({
           maxHeight: "80vh",
           display: "flex",
           flexDirection: "column",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+          boxShadow: "0 21px 60px rgba(0,0,0,0.4)",
           animation: "savedSongsPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
