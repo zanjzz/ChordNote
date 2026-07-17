@@ -12,6 +12,7 @@
 
 * {
   font-family: var(--font-ui);
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
