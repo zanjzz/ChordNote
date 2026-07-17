@@ -1,0 +1,278 @@
+// src/components/ChordsPanel.jsx
+import React, { useState, useRef, useEffect } from "react";
+import { isSectionLabel, labelText } from "../utils/sectionHelpers";
+import { normalizeChordLine } from "../utils/chordTranspose";
+import { convertChordLine } from "../utils/nashvilleNumbers";
+
+export default function ChordsPanel({
+  lines,
+  chords,
+  handleChordChange,
+  editorFontSize,
+  chordColor,
+  theme,
+  showLineNumbers,
+  chordDisplayMode,
+  musicKey,
+}) {
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [focusedIndex, setFocusedIndex] = useState(null);
+  const inputRefs = useRef({});
+
+  const setInputRef = (index) => (el) => {
+    if (el) {
+      inputRefs.current[index] = el;
+    } else {
+      delete inputRefs.current[index];
+    }
+  };
+
+  const getDisplayChord = (chordText, index) => {
+    if (!chordText) return "";
+    if (focusedIndex === index) return chordText;
+    if (chordDisplayMode === "letters") {
+      // 👇 Always show properly capitalized in letters mode. Uses the
+      // line-safe normalizer since a chord field can hold more than one
+      // chord (e.g. "Am   G   C"), not just a single token.
+      return normalizeChordLine(chordText);
+    }
+    // In Nashville mode, convert from the stored raw chord
+    return convertChordLine(chordText, musicKey, chordDisplayMode);
+  };
+
+  const handleFocus = (index) => {
+    setFocusedIndex(index);
+    const el = inputRefs.current[index];
+    if (el) {
+      // Show the raw stored chord (which is normalized)
+      const raw = chords[index] || "";
+      if (el.innerText !== raw) {
+        el.innerText = raw;
+      }
+    }
+  };
+
+  const handleBlur = (index, rawValue) => {
+    // 👇 Normalize case BEFORE storing (uppercase root, proper quality
+    // casing). normalizeChordLine handles one or many chords in the field,
+    // so lowercase input is fixed whether it's a single chord or a whole
+    // line of them.
+    const normalized = normalizeChordLine(rawValue);
+    handleChordChange(index, normalized);
+    setFocusedIndex(null);
+  };
+
+  // Sync display when chords/mode/key change
+  useEffect(() => {
+    Object.keys(inputRefs.current).forEach((key) => {
+      const index = parseInt(key, 10);
+      const el = inputRefs.current[index];
+      if (el && focusedIndex !== index) {
+        const display = getDisplayChord(chords[index] || "", index);
+        if (el.innerText !== display) {
+          el.innerText = display;
+        }
+      }
+    });
+  }, [chords, chordDisplayMode, musicKey, focusedIndex]);
+
+  // Initial mount sync
+  useEffect(() => {
+    Object.keys(inputRefs.current).forEach((key) => {
+      const index = parseInt(key, 10);
+      const el = inputRefs.current[index];
+      if (el && focusedIndex !== index) {
+        const display = getDisplayChord(chords[index] || "", index);
+        if (el.innerText !== display) {
+          el.innerText = display;
+        }
+      }
+    });
+  }, []);
+
+  const isNashvilleMode = chordDisplayMode !== "letters";
+  const noKey = !musicKey || musicKey.trim() === "";
+
+  return (
+    <div>
+      <span
+        style={{
+          display: "block",
+          fontSize: "12px",
+          fontWeight: 600,
+          color: theme.textSecondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.04em",
+          marginBottom: "8px",
+        }}
+      >
+        Chords
+        {isNashvilleMode && noKey && (
+          <span
+            style={{
+              fontSize: "10px",
+              fontWeight: 400,
+              color: theme.textMuted,
+              marginLeft: "8px",
+              textTransform: "none",
+              letterSpacing: "0",
+            }}
+          >
+            ⚠️ Set a key above to enable{" "}
+            {chordDisplayMode === "numbers" ? "Numbers" : "Roman"}
+          </span>
+        )}
+      </span>
+
+      <div
+        className="chord-panel"
+        style={{
+          background: theme.panel,
+          border: `1px solid ${theme.border}`,
+          height: "380px",
+          overflowY: "auto",
+          resize: "vertical",
+          textAlign: "left",
+          padding: "12px 12px",
+          boxSizing: "border-box",
+        }}
+      >
+        {lines.length === 0 || (lines.length === 1 && lines[0] === "") ? (
+          <p style={{ color: theme.textMuted, fontSize: "14px", margin: 0 }}>
+            Your lyrics will show up here — add chords above each line.
+          </p>
+        ) : (
+          lines.map((line, i) =>
+            isSectionLabel(line) ? (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: showLineNumbers ? "8px" : 0,
+                  margin: i === 0 ? "0 0 8px" : "12px 0 8px",
+                  padding: "0 4px",
+                }}
+              >
+                {showLineNumbers && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: theme.textMuted,
+                      minWidth: "16px",
+                      textAlign: "right",
+                      fontFamily:
+                        "var(--font-mono, 'JetBrains Mono', monospace)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                )}
+                <div
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: theme.textSecondary,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    textAlign: "left",
+                    flex: 1,
+                  }}
+                >
+                  {labelText(line)}
+                </div>
+              </div>
+            ) : (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  gap: showLineNumbers ? "8px" : 0,
+                  marginBottom: "6px",
+                  padding: "0 4px",
+                }}
+              >
+                {showLineNumbers && (
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: theme.textMuted,
+                      minWidth: "16px",
+                      textAlign: "right",
+                      paddingTop: "3px",
+                      fontFamily:
+                        "var(--font-mono, 'JetBrains Mono', monospace)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                )}
+                <div style={{ flex: 1, textAlign: "left" }}>
+                  <div
+                    className="chord-input"
+                    contentEditable
+                    suppressContentEditableWarning
+                    onMouseEnter={() => setHoveredIndex(i)}
+                    onMouseLeave={() =>
+                      setHoveredIndex((h) => (h === i ? null : h))
+                    }
+                    onFocus={() => handleFocus(i)}
+                    onBlur={(e) => handleBlur(i, e.currentTarget.innerText)}
+                    ref={setInputRef(i)}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      border: "none",
+                      outline: "none",
+                      background:
+                        hoveredIndex === i ? theme.borderSoft : "transparent",
+                      borderRadius: "4px",
+                      fontSize: `${editorFontSize}px`,
+                      fontWeight: 600,
+                      color: chordColor,
+                      padding: "2px 4px",
+                      margin: "0 -4px",
+                      textAlign: "left",
+                      minHeight: `${editorFontSize * 1.2}px`,
+                      letterSpacing: "0.02em",
+                      whiteSpace: "pre",
+                      fontFamily:
+                        "var(--font-mono, 'JetBrains Mono', monospace)",
+                      cursor: "text",
+                      transition: "background 0.15s ease",
+                    }}
+                  />
+                  <div
+                    className="chord-lyrics-textarea"
+                    style={{
+                      fontSize: `${editorFontSize}px`,
+                      lineHeight: "1.5",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      minHeight: "24px",
+                      borderBottom: `1px solid ${theme.borderSoft}`,
+                      paddingBottom: "6px",
+                      color: theme.text,
+                      textAlign: "left",
+                      paddingLeft: "2px",
+                    }}
+                  >
+                    {line === "" ? "\u00A0" : line}
+                  </div>
+                </div>
+              </div>
+            ),
+          )
+        )}
+      </div>
+
+      <style>{`
+        .chord-input:focus {
+          background: ${theme.borderSoft} !important;
+        }
+      `}</style>
+    </div>
+  );
+}
