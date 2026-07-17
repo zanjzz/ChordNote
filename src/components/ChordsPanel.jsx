@@ -31,12 +31,8 @@ export default function ChordsPanel({
     if (!chordText) return "";
     if (focusedIndex === index) return chordText;
     if (chordDisplayMode === "letters") {
-      // 👇 Always show properly capitalized in letters mode. Uses the
-      // line-safe normalizer since a chord field can hold more than one
-      // chord (e.g. "Am   G   C"), not just a single token.
       return normalizeChordLine(chordText);
     }
-    // In Nashville mode, convert from the stored raw chord
     return convertChordLine(chordText, musicKey, chordDisplayMode);
   };
 
@@ -44,7 +40,6 @@ export default function ChordsPanel({
     setFocusedIndex(index);
     const el = inputRefs.current[index];
     if (el) {
-      // Show the raw stored chord (which is normalized)
       const raw = chords[index] || "";
       if (el.innerText !== raw) {
         el.innerText = raw;
@@ -53,10 +48,6 @@ export default function ChordsPanel({
   };
 
   const handleBlur = (index, rawValue) => {
-    // 👇 Normalize case BEFORE storing (uppercase root, proper quality
-    // casing). normalizeChordLine handles one or many chords in the field,
-    // so lowercase input is fixed whether it's a single chord or a whole
-    // line of them.
     const normalized = normalizeChordLine(rawValue);
     handleChordChange(index, normalized);
     setFocusedIndex(null);
@@ -131,6 +122,7 @@ export default function ChordsPanel({
           border: `1px solid ${theme.border}`,
           height: "380px",
           overflowY: "auto",
+          overflowX: "hidden", // 👈 prevent horizontal overflow of the panel
           resize: "vertical",
           textAlign: "left",
           padding: "12px 12px",
@@ -209,7 +201,8 @@ export default function ChordsPanel({
                     {i + 1}
                   </span>
                 )}
-                <div style={{ flex: 1, textAlign: "left" }}>
+                {/* 👇 minWidth: 0 allows this flex child to shrink */}
+                <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
                   <div
                     className="chord-input"
                     contentEditable
@@ -224,6 +217,7 @@ export default function ChordsPanel({
                     style={{
                       display: "block",
                       width: "100%",
+                      maxWidth: "100%", // 👈 ensure it never exceeds parent
                       border: "none",
                       outline: "none",
                       background:
@@ -232,8 +226,7 @@ export default function ChordsPanel({
                       fontSize: `${editorFontSize}px`,
                       fontWeight: 600,
                       color: chordColor,
-                      padding: "2px 4px",
-                      margin: "0 -4px",
+                      padding: "2px 4px", // 👈 no negative margin
                       textAlign: "left",
                       minHeight: `${editorFontSize * 1.2}px`,
                       letterSpacing: "0.02em",
@@ -242,6 +235,8 @@ export default function ChordsPanel({
                         "var(--font-mono, 'JetBrains Mono', monospace)",
                       cursor: "text",
                       transition: "background 0.15s ease",
+                      overflowX: "auto", // 👈 scroll long chord lines
+                      boxSizing: "border-box", // 👈 padding included in width
                     }}
                   />
                   <div

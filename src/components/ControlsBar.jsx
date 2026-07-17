@@ -85,6 +85,50 @@ export default function ControlsBar({
         />
       </div>
 
+      {/* Text size */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "12px",
+            fontWeight: 600,
+            color: theme.textSecondary,
+            marginRight: "2px",
+          }}
+        >
+          Size
+        </span>
+        <StepBtn
+          theme={theme}
+          onClick={() =>
+            setEditorFontSize((s) => clamp(s - 1, EDITOR_MIN, EDITOR_MAX))
+          }
+          icon={<Minus size={12} />}
+        />
+        <span
+          style={{
+            fontSize: "12px",
+            color: theme.textMuted,
+            minWidth: "16px",
+            textAlign: "center",
+          }}
+        >
+          {editorFontSize}
+        </span>
+        <StepBtn
+          theme={theme}
+          onClick={() =>
+            setEditorFontSize((s) => clamp(s + 1, EDITOR_MIN, EDITOR_MAX))
+          }
+          icon={<Plus size={12} />}
+        />
+      </div>
+
       {/* Chord color */}
       <div
         style={{
@@ -138,50 +182,6 @@ export default function ControlsBar({
             borderRadius: "50%",
           }}
           title="Custom color"
-        />
-      </div>
-
-      {/* Text size */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "12px",
-            fontWeight: 600,
-            color: theme.textSecondary,
-            marginRight: "2px",
-          }}
-        >
-          Size
-        </span>
-        <StepBtn
-          theme={theme}
-          onClick={() =>
-            setEditorFontSize((s) => clamp(s - 1, EDITOR_MIN, EDITOR_MAX))
-          }
-          icon={<Minus size={12} />}
-        />
-        <span
-          style={{
-            fontSize: "12px",
-            color: theme.textMuted,
-            minWidth: "16px",
-            textAlign: "center",
-          }}
-        >
-          {editorFontSize}
-        </span>
-        <StepBtn
-          theme={theme}
-          onClick={() =>
-            setEditorFontSize((s) => clamp(s + 1, EDITOR_MIN, EDITOR_MAX))
-          }
-          icon={<Plus size={12} />}
         />
       </div>
 
