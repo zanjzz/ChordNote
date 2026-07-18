@@ -153,7 +153,7 @@ export default function SupportBanner({ theme, darkMode }) {
           color: textColor,
         }}
       >
-        Enjoying Chordnote?
+        Enjoying ChordNote?
       </h2>
 
       <p
