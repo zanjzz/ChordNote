@@ -43,14 +43,16 @@ export default function SpacingControls({
       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
         <StepBtn
           theme={themeObj}
-          onClick={() => setter((v) => Math.max(min, v - step))}
+          onClick={() =>
+            setter((v) => Math.max(min, +(v - step).toFixed(fixed)))
+          }
           icon={<Minus size={12} />}
         />
         <span
           style={{
             fontSize: "14px",
             fontWeight: 600,
-            width: "32px",
+            width: "36px",
             textAlign: "center",
           }}
         >
@@ -58,7 +60,9 @@ export default function SpacingControls({
         </span>
         <StepBtn
           theme={themeObj}
-          onClick={() => setter((v) => Math.min(max, v + step))}
+          onClick={() =>
+            setter((v) => Math.min(max, +(v + step).toFixed(fixed)))
+          }
           icon={<Plus size={12} />}
         />
       </div>
@@ -71,33 +75,39 @@ export default function SpacingControls({
         Spacing
       </SectionHeader>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {/*
+          👇 Same min/max/default values as before (untouched, per request)
+          — only the step size and displayed precision changed, so the
+          +/- buttons move in finer increments instead of jumping by a
+          full 0.1 (or 10px for padding) each click.
+        */}
         {renderSlider(
           "Line height",
           lineHeight,
           setLineHeight,
-          0.1,
+          0.05,
           1.0,
           2.0,
-          1,
+          2,
         )}
         {renderSlider(
           "Label spacing",
           labelSpacing,
           setLabelSpacing,
-          0.1,
+          0.05,
           0.2,
           3.0,
-          1,
+          2,
         )}
-        {renderSlider("Padding", paddingSize, setPaddingSize, 10, 80, 250, 0)}
+        {renderSlider("Padding", paddingSize, setPaddingSize, 5, 80, 250, 0)}
         {renderSlider(
           "Block spacing",
           blockSpacing,
           setBlockSpacing,
-          0.1,
+          0.05,
           0.2,
           3.0,
-          1,
+          2,
         )}
       </div>
     </div>

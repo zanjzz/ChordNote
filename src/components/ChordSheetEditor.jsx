@@ -52,7 +52,7 @@ import Toast from "./modals/Toast.jsx";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal.jsx";
 import ConfirmDeleteAllModal from "./modals/ConfirmDeleteAllModal.jsx";
 import MilestoneModal from "./modals/MilestoneModal.jsx";
-import ConfirmClearModal from "./modals/ConfirmClearModal.jsx"; // 👈 NEW IMPORT
+import ConfirmClearModal from "./modals/ConfirmClearModal.jsx";
 
 // ---- Safe localStorage helper ----
 const readSavedSongsFromStorage = () => {
@@ -174,7 +174,24 @@ export default function ChordSheetEditor() {
   const [milestoneCloseUnlocked, setMilestoneCloseUnlocked] = useState(true);
   const milestoneTimerRef = useRef(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
-  const [showClearConfirm, setShowClearConfirm] = useState(false); // 👈 NEW STATE
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
+  // 👇 which panel (if any) is showing fullscreen.
+  // 'lyrics' | 'chords' | null. IMPORTANT: unlike before, this no longer
+  // triggers rendering a *second* <LyricsPanel>/<ChordsPanel> instance.
+  // The exact same panel instance that lives in the main grid gets
+  // repositioned into a fullscreen overlay via CSS (see the wrapper divs
+  // around each panel below). This keeps the underlying <textarea> /
+  // contentEditable DOM node alive the whole time, which is what browser
+  // undo history (Ctrl+Z) is tied to — so undo history is no longer lost
+  // when entering/exiting fullscreen.
+  // 'lyrics' | 'chords' | null. The SAME LyricsPanel/ChordsPanel instance
+  // that lives in the main grid gets repositioned into a fullscreen
+  // overlay purely via inline CSS (position: fixed) toggled on its
+  // wrapper div — no portal, no remount — so undo history on the
+  // underlying <textarea>/contentEditable survives opening and closing
+  // fullscreen.
+  const [fullscreenPanel, setFullscreenPanel] = useState(null);
 
   // ---- Refs ----
   const prevLinesRef = useRef(null);
@@ -266,6 +283,17 @@ export default function ChordSheetEditor() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showCopyMenu]);
+
+  // Escape closes the fullscreen panel, matching the same pattern the
+  // preview zoom already uses elsewhere in this app.
+  useEffect(() => {
+    if (!fullscreenPanel) return;
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setFullscreenPanel(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [fullscreenPanel]);
 
   // ---- Toast & Timeout cleanup ----
   useEffect(() => {
@@ -613,6 +641,38 @@ export default function ChordSheetEditor() {
     !milestoneToast.isLimit &&
     !milestoneCloseUnlocked;
 
+  // 👇 Shared styles for whichever panel is currently fullscreen. These
+  // wrap the SAME panel instance (not a duplicate) — see the grid below.
+  const fullscreenWrapperStyle = {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(20, 19, 16, 0.55)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 70,
+    padding: "24px",
+    boxSizing: "border-box",
+    animation: "fadeIn 0.18s ease",
+  };
+
+  const fullscreenBoxStyle = {
+    background: theme.page,
+    border: `1px solid ${theme.border}`,
+    borderRadius: "14px",
+    width: "100%",
+    maxWidth: "920px",
+    height: "min(88vh, 820px)", // slightly taller than before (was min(82vh, 760px))
+    padding: "20px",
+    boxSizing: "border-box",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
+    animation: "slideUp 0.22s cubic-bezier(0.4, 0, 0.2, 1)",
+    display: "flex",
+    flexDirection: "column",
+  };
+
   // ---- Render ----
   return (
     <div
@@ -769,27 +829,103 @@ export default function ChordSheetEditor() {
         musicKey={musicKey}
       />
 
+      {/* Each panel is rendered EXACTLY ONCE. When it's the active
+          fullscreenPanel, its wrapper div switches to fixed-overlay
+          styles via inline CSS, and inModal flips to true so the panel's
+          own internal layout fills the overlay. Because this is always
+          the same component instance (same position in the React tree,
+          never unmounted/remounted), the underlying <textarea> /
+          contentEditable DOM node — and the browser's native undo
+          (Ctrl+Z) history tied to it — survives opening and closing
+          fullscreen. */}
       <div className="chord-editor-grid">
-        <LyricsPanel
-          theme={theme}
-          lyrics={lyrics}
-          setLyrics={setLyrics}
-          editorFontSize={editorFontSize}
-          addSection={addSection}
-          chordColor={chordColor}
-          showLineNumbers={showLineNumbers}
-        />
-        <ChordsPanel
-          lines={lines}
-          chords={chords}
-          handleChordChange={handleChordChange}
-          editorFontSize={editorFontSize}
-          chordColor={chordColor}
-          theme={theme}
-          showLineNumbers={showLineNumbers}
-          chordDisplayMode={chordDisplayMode}
-          musicKey={musicKey}
-        />
+        {/* This outer div is the ACTUAL grid item and never changes —
+            no inline style, no conditional logic, always a plain,
+            normal in-flow block box. That's what keeps it counted as a
+            real grid item at all times, so .chord-editor-grid's column
+            sizing can never be thrown off no matter what's fullscreen.
+            Only the div nested inside it toggles position: fixed. */}
+        <div>
+          <div
+            style={
+              fullscreenPanel === "lyrics" ? fullscreenWrapperStyle : undefined
+            }
+            onClick={
+              fullscreenPanel === "lyrics"
+                ? () => setFullscreenPanel(null)
+                : undefined
+            }
+          >
+            <div
+              style={
+                fullscreenPanel === "lyrics" ? fullscreenBoxStyle : undefined
+              }
+              onClick={
+                fullscreenPanel === "lyrics"
+                  ? (e) => e.stopPropagation()
+                  : undefined
+              }
+            >
+              <LyricsPanel
+                theme={theme}
+                lyrics={lyrics}
+                setLyrics={setLyrics}
+                editorFontSize={editorFontSize}
+                addSection={addSection}
+                chordColor={chordColor}
+                showLineNumbers={showLineNumbers}
+                inModal={fullscreenPanel === "lyrics"}
+                onToggleFullscreen={() =>
+                  setFullscreenPanel(
+                    fullscreenPanel === "lyrics" ? null : "lyrics",
+                  )
+                }
+              />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div
+            style={
+              fullscreenPanel === "chords" ? fullscreenWrapperStyle : undefined
+            }
+            onClick={
+              fullscreenPanel === "chords"
+                ? () => setFullscreenPanel(null)
+                : undefined
+            }
+          >
+            <div
+              style={
+                fullscreenPanel === "chords" ? fullscreenBoxStyle : undefined
+              }
+              onClick={
+                fullscreenPanel === "chords"
+                  ? (e) => e.stopPropagation()
+                  : undefined
+              }
+            >
+              <ChordsPanel
+                lines={lines}
+                chords={chords}
+                handleChordChange={handleChordChange}
+                editorFontSize={editorFontSize}
+                chordColor={chordColor}
+                theme={theme}
+                showLineNumbers={showLineNumbers}
+                chordDisplayMode={chordDisplayMode}
+                musicKey={musicKey}
+                inModal={fullscreenPanel === "chords"}
+                onToggleFullscreen={() =>
+                  setFullscreenPanel(
+                    fullscreenPanel === "chords" ? null : "chords",
+                  )
+                }
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Bottom Action Bar - unchanged desktop layout */}
@@ -893,10 +1029,10 @@ export default function ChordSheetEditor() {
               style={{
                 position: "absolute",
                 bottom: "calc(100% + 10px)",
-                left: 0, // 👈 Anchors to left edge
-                width: "100%", // 👈 Fills the button exactly
-                minWidth: "auto", // 👈 Removes the fixed 190px
-                boxSizing: "border-box", // 👈 Includes padding in width
+                left: 0,
+                width: "100%",
+                minWidth: "auto",
+                boxSizing: "border-box",
                 background: theme.panel,
                 border: `1px solid ${theme.border}`,
                 borderRadius: "12px",
@@ -986,12 +1122,11 @@ export default function ChordSheetEditor() {
             fontSize: "14px",
             fontWeight: 600,
             cursor: "pointer",
-            whiteSpace: "nowrap",
             transition: "border-color 0.15s ease",
           }}
         >
           <Printer size={25} style={{ width: 15, height: 20, flexShrink: 0 }} />{" "}
-          Preview & export
+          Preview & Export
         </button>
       </div>
 

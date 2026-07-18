@@ -1,8 +1,8 @@
 // src/components/LyricsPanel.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Maximize2 } from "lucide-react";
 import { SECTION_PRESETS } from "../utils/sectionHelpers";
-import { useResizableHeight } from "../hooks/useResizableHeight.js"; // 👈 NEW
+import { useResizableHeight } from "../hooks/useResizableHeight.js";
 
 export default function LyricsPanel({
   theme,
@@ -12,13 +12,18 @@ export default function LyricsPanel({
   addSection,
   chordColor,
   showLineNumbers,
+  inModal = false, // false on the main page (default), true inside the fullscreen overlay
+  onToggleFullscreen, // opens fullscreen from the main page, closes it from inside the overlay
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [hoveredSection, setHoveredSection] = useState(null);
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
-  const { height, startDragging } = useResizableHeight(380, { min: 180 }); // 👈 NEW
+  // Untouched — still drives the main-page height exactly as before.
+  // Inside the fullscreen overlay the textarea is pinned to height: 100%
+  // instead, so this hook's value simply goes unused there.
+  const { height, startDragging } = useResizableHeight(380, { min: 180 });
 
   const pendingScrollRef = useRef(false);
 
@@ -55,22 +60,61 @@ export default function LyricsPanel({
   const lineHeightPx = editorFontSize * 1.9;
 
   return (
-    <div>
-      <span
+    <div
+      style={
+        inModal
+          ? { height: "100%", display: "flex", flexDirection: "column" }
+          : undefined
+      }
+    >
+      <div
         style={{
-          display: "block",
-          fontSize: "12px",
-          fontWeight: 600,
-          color: theme.textSecondary,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           marginBottom: "8px",
         }}
       >
-        Lyrics
-      </span>
+        <span
+          style={{
+            fontSize: "12px",
+            fontWeight: 600,
+            color: theme.textSecondary,
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Lyrics
+        </span>
+        {onToggleFullscreen && (
+          <button
+            onClick={onToggleFullscreen}
+            title={inModal ? "Exit fullscreen" : "Expand"}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "26px",
+              height: "26px",
+              flexShrink: 0,
+              borderRadius: "6px",
+              border: `1px solid ${theme.border}`,
+              background: theme.panel,
+              color: theme.textSecondary,
+              cursor: "pointer",
+            }}
+          >
+            {inModal ? <X size={13} /> : <Maximize2 size={13} />}
+          </button>
+        )}
+      </div>
 
-      <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "relative",
+          ...(inModal ? { flex: 1, minHeight: 0 } : null),
+        }}
+      >
         {showLineNumbers && (
           <div
             ref={gutterRef}
@@ -85,7 +129,10 @@ export default function LyricsPanel({
               boxSizing: "border-box",
               pointerEvents: "none",
               borderRight: `1px solid ${theme.borderSoft}`,
-              borderRadius: "10px 0 0 0", // 👈 CHANGED: bottom rounding moved to handle
+              // Main page: only the top-left corner is rounded (the handle
+              // below owns the bottom rounding). In the overlay there's no
+              // handle below it, so both left corners round out.
+              borderRadius: inModal ? "10px 0 0 10px" : "10px 0 0 0",
             }}
           >
             {Array.from({ length: lineCount }, (_, i) => (
@@ -117,11 +164,14 @@ export default function LyricsPanel({
           className="chord-lyrics-textarea"
           style={{
             width: "100%",
-            height: `${height}px`, // 👈 CHANGED: was minHeight + native resize
+            height: inModal ? "100%" : `${height}px`,
             background: theme.panel,
             border: `1px solid ${theme.border}`,
-            borderBottom: "none", // 👈 NEW
-            borderRadius: "10px 10px 0 0", // 👈 CHANGED
+            // Main page: bottom border lives on the drag handle below it.
+            // In the overlay there's no handle, so the textarea owns all 4
+            // sides of its own border.
+            borderBottom: inModal ? `1px solid ${theme.border}` : "none",
+            borderRadius: inModal ? "10px" : "10px 10px 0 0",
             padding: "16px",
             paddingLeft: showLineNumbers ? "42px" : "16px",
             fontSize: `${editorFontSize}px`,
@@ -130,37 +180,46 @@ export default function LyricsPanel({
             boxSizing: "border-box",
             outline: "none",
             transition: "padding-left 0.15s ease",
+            // <textarea> defaults to the browser's native `resize: both`
+            // unless explicitly overridden — this keeps the custom drag
+            // handle below as the only way to resize on the main page,
+            // and disables resize entirely in the fullscreen overlay.
+            resize: "none",
           }}
         />
       </div>
 
-      {/* 👇 NEW: full-width drag handle, replaces native corner resize */}
-      <div
-        onMouseDown={startDragging}
-        onTouchStart={startDragging}
-        style={{
-          height: "16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: theme.borderSoft,
-          border: `1px solid ${theme.border}`,
-          borderTop: "none",
-          borderRadius: "0 0 10px 10px",
-          cursor: "row-resize",
-          touchAction: "none",
-        }}
-      >
+      {/* Drag handle only makes sense on the main page — inside the
+          fullscreen overlay the panel is pinned to 100% of the overlay's
+          height and resize is disabled entirely. */}
+      {!inModal && (
         <div
+          onMouseDown={startDragging}
+          onTouchStart={startDragging}
           style={{
-            width: "36px",
-            height: "4px",
-            borderRadius: "2px",
-            background: theme.textMuted,
-            opacity: 0.6,
+            height: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: theme.borderSoft,
+            border: `1px solid ${theme.border}`,
+            borderTop: "none",
+            borderRadius: "0 0 10px 10px",
+            cursor: "row-resize",
+            touchAction: "none",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              width: "36px",
+              height: "4px",
+              borderRadius: "2px",
+              background: theme.textMuted,
+              opacity: 0.6,
+            }}
+          />
+        </div>
+      )}
 
       <div
         style={{
@@ -168,6 +227,7 @@ export default function LyricsPanel({
           gap: "6px",
           marginTop: "10px",
           flexWrap: "wrap",
+          flexShrink: 0,
         }}
       >
         {SECTION_PRESETS.map((label) => (

@@ -1,9 +1,10 @@
 // src/components/ChordsPanel.jsx
 import React, { useState, useRef, useEffect } from "react";
+import { Maximize2, X } from "lucide-react";
 import { isSectionLabel, labelText } from "../utils/sectionHelpers";
 import { normalizeChordLine } from "../utils/chordTranspose";
 import { convertChordLine } from "../utils/nashvilleNumbers";
-import { useResizableHeight } from "../hooks/useResizableHeight.js"; // 👈 NEW
+import { useResizableHeight } from "../hooks/useResizableHeight.js";
 
 export default function ChordsPanel({
   lines,
@@ -15,11 +16,16 @@ export default function ChordsPanel({
   showLineNumbers,
   chordDisplayMode,
   musicKey,
+  inModal = false, // false on the main page (default), true inside the fullscreen overlay
+  onToggleFullscreen, // opens fullscreen from the main page, closes it from inside the overlay
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [focusedIndex, setFocusedIndex] = useState(null);
   const inputRefs = useRef({});
-  const { height, startDragging } = useResizableHeight(380, { min: 180 }); // 👈 NEW
+  // Untouched — still drives the main-page height exactly as before.
+  // Inside the fullscreen overlay the panel is pinned to height: 100%
+  // instead, so this hook's value simply goes unused there.
+  const { height, startDragging } = useResizableHeight(380, { min: 180 });
 
   const setInputRef = (index) => (el) => {
     if (el) {
@@ -85,44 +91,81 @@ export default function ChordsPanel({
   const noKey = !musicKey || musicKey.trim() === "";
 
   return (
-    <div>
-      <span
+    <div
+      style={
+        inModal
+          ? { height: "100%", display: "flex", flexDirection: "column" }
+          : undefined
+      }
+    >
+      <div
         style={{
-          display: "block",
-          fontSize: "12px",
-          fontWeight: 600,
-          color: theme.textSecondary,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           marginBottom: "8px",
         }}
       >
-        Chords
-        {isNashvilleMode && noKey && (
-          <span
+        <span
+          style={{
+            fontSize: "12px",
+            fontWeight: 600,
+            color: theme.textSecondary,
+            textTransform: "uppercase",
+            letterSpacing: "0.04em",
+          }}
+        >
+          Chords
+          {isNashvilleMode && noKey && (
+            <span
+              style={{
+                fontSize: "10px",
+                fontWeight: 400,
+                color: theme.textMuted,
+                marginLeft: "8px",
+                textTransform: "none",
+                letterSpacing: "0",
+              }}
+            >
+              ⚠️ Set a key above to enable{" "}
+              {chordDisplayMode === "numbers" ? "Numbers" : "Roman"}
+            </span>
+          )}
+        </span>
+        {onToggleFullscreen && (
+          <button
+            onClick={onToggleFullscreen}
+            title={inModal ? "Exit fullscreen" : "Expand"}
             style={{
-              fontSize: "10px",
-              fontWeight: 400,
-              color: theme.textMuted,
-              marginLeft: "8px",
-              textTransform: "none",
-              letterSpacing: "0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "26px",
+              height: "26px",
+              flexShrink: 0,
+              borderRadius: "6px",
+              border: `1px solid ${theme.border}`,
+              background: theme.panel,
+              color: theme.textSecondary,
+              cursor: "pointer",
             }}
           >
-            ⚠️ Set a key above to enable{" "}
-            {chordDisplayMode === "numbers" ? "Numbers" : "Roman"}
-          </span>
+            {inModal ? <X size={13} /> : <Maximize2 size={13} />}
+          </button>
         )}
-      </span>
+      </div>
 
       <div
         className="chord-panel"
         style={{
           background: theme.panel,
           border: `1px solid ${theme.border}`,
-          borderBottom: "none", // 👈 NEW: handle bar below owns the bottom border
-          borderRadius: "10px 10px 0 0", // 👈 NEW: bottom rounding now lives on the handle
-          height: `${height}px`, // 👈 CHANGED: driven by drag state, not a fixed value
+          // Main page: bottom border lives on the drag handle below it.
+          // In the overlay there's no handle, so this div owns all 4 sides.
+          borderBottom: inModal ? `1px solid ${theme.border}` : "none",
+          borderRadius: inModal ? "10px" : "10px 10px 0 0",
+          height: inModal ? "100%" : `${height}px`,
+          ...(inModal ? { flex: 1, minHeight: 0 } : null),
           overflowY: "auto",
           overflowX: "hidden",
           textAlign: "left",
@@ -265,33 +308,37 @@ export default function ChordsPanel({
         )}
       </div>
 
-      {/* 👇 NEW: full-width drag handle, replaces native corner resize */}
-      <div
-        onMouseDown={startDragging}
-        onTouchStart={startDragging}
-        style={{
-          height: "16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: theme.borderSoft,
-          border: `1px solid ${theme.border}`,
-          borderTop: "none",
-          borderRadius: "0 0 10px 10px",
-          cursor: "row-resize",
-          touchAction: "none",
-        }}
-      >
+      {/* Drag handle only makes sense on the main page — inside the
+          fullscreen overlay the panel is pinned to 100% of the overlay's
+          height and resize is disabled entirely. */}
+      {!inModal && (
         <div
+          onMouseDown={startDragging}
+          onTouchStart={startDragging}
           style={{
-            width: "36px",
-            height: "4px",
-            borderRadius: "2px",
-            background: theme.textMuted,
-            opacity: 0.6,
+            height: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: theme.borderSoft,
+            border: `1px solid ${theme.border}`,
+            borderTop: "none",
+            borderRadius: "0 0 10px 10px",
+            cursor: "row-resize",
+            touchAction: "none",
           }}
-        />
-      </div>
+        >
+          <div
+            style={{
+              width: "36px",
+              height: "4px",
+              borderRadius: "2px",
+              background: theme.textMuted,
+              opacity: 0.6,
+            }}
+          />
+        </div>
+      )}
 
       <style>{`
         .chord-input:focus {
