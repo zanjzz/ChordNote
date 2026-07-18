@@ -30,6 +30,7 @@ import {
 import { isSectionLabel, SECTION_PRESETS } from "../utils/sectionHelpers.js";
 import { convertChordLine } from "../utils/nashvilleNumbers.js";
 import { generatePages, downloadPages } from "../utils/canvasHelpers.js";
+import { encodeShareData, decodeShareData } from "../utils/shareCodec.js";
 
 // ---- Hooks ----
 import { useChordRealignment } from "../hooks/useChordRealignment.js";
@@ -51,6 +52,7 @@ import Toast from "./modals/Toast.jsx";
 import ConfirmDeleteModal from "./modals/ConfirmDeleteModal.jsx";
 import ConfirmDeleteAllModal from "./modals/ConfirmDeleteAllModal.jsx";
 import MilestoneModal from "./modals/MilestoneModal.jsx";
+import ConfirmClearModal from "./modals/ConfirmClearModal.jsx"; // 👈 NEW IMPORT
 
 // ---- Safe localStorage helper ----
 const readSavedSongsFromStorage = () => {
@@ -73,7 +75,8 @@ export default function ChordSheetEditor() {
 
     if (sharedData) {
       try {
-        const decoded = JSON.parse(atob(decodeURIComponent(sharedData)));
+        const decoded = decodeShareData(sharedData);
+        if (!decoded) throw new Error("Invalid share data");
         return {
           title: decoded.title || "",
           author: decoded.author || "",
@@ -171,6 +174,7 @@ export default function ChordSheetEditor() {
   const [milestoneCloseUnlocked, setMilestoneCloseUnlocked] = useState(true);
   const milestoneTimerRef = useRef(null);
   const [hoveredBtn, setHoveredBtn] = useState(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false); // 👈 NEW STATE
 
   // ---- Refs ----
   const prevLinesRef = useRef(null);
@@ -367,6 +371,22 @@ export default function ChordSheetEditor() {
     if (data.detectedMode) {
       setChordDisplayMode(data.detectedMode);
     }
+  };
+
+  // ---- Clear function ----
+  const handleClear = () => {
+    setTitle("");
+    setAuthor("");
+    setBpm("");
+    setMusicKey("");
+    setCapo("");
+    setLyrics("");
+    setChords({});
+    setTransposeOffset(0);
+    prevLinesRef.current = [""];
+    clearedBackupRef.current = null;
+    setShowClearConfirm(false);
+    showToast("All inputs cleared.", "info");
   };
 
   // ---- Copy functions ----
@@ -566,7 +586,7 @@ export default function ChordSheetEditor() {
       showLineNumbers,
       chordDisplayMode,
     };
-    const encoded = encodeURIComponent(btoa(JSON.stringify(dataToShare)));
+    const encoded = encodeShareData(dataToShare);
     const shareUrl = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
 
     if (navigator.share) {
@@ -631,6 +651,7 @@ export default function ChordSheetEditor() {
           to { transform: scaleX(0); }
         }
 
+
         /* ---------- MOBILE OVERRIDES ONLY ---------- */
         @media (max-width: 768px) {
           .chord-meta-input {
@@ -652,13 +673,6 @@ export default function ChordSheetEditor() {
           }
           .chord-top-bar {
             gap: 16px !important;
-          }
-          .chord-panel {
-            height: 300px !important;
-            min-height: 300px !important;
-          }
-          .chord-lyrics-textarea {
-            min-height: 300px !important;
           }
         }
 
@@ -683,6 +697,7 @@ export default function ChordSheetEditor() {
         onSave={handleSaveCurrentSong}
         onViewSaved={() => setShowSavedSongs(true)}
         savedCount={savedSongs.length}
+        onClear={() => setShowClearConfirm(true)}
       />
 
       <div className="chord-meta-grid">
@@ -872,12 +887,14 @@ export default function ChordSheetEditor() {
               style={{
                 position: "absolute",
                 bottom: "calc(100% + 10px)",
-                right: 0,
+                left: 0, // 👈 Anchors to left edge
+                width: "100%", // 👈 Fills the button exactly
+                minWidth: "auto", // 👈 Removes the fixed 190px
+                boxSizing: "border-box", // 👈 Includes padding in width
                 background: theme.panel,
                 border: `1px solid ${theme.border}`,
                 borderRadius: "12px",
                 boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
-                minWidth: "190px",
                 padding: "6px",
                 zIndex: 10,
                 animation: "slideUp 0.18s ease",
@@ -967,7 +984,8 @@ export default function ChordSheetEditor() {
             transition: "border-color 0.15s ease",
           }}
         >
-          <Printer size={16} /> Preview & export
+          <Printer size={22} style={{ width: 20, height: 20, flexShrink: 0 }} />{" "}
+          Preview & export
         </button>
       </div>
 
@@ -1032,6 +1050,14 @@ export default function ChordSheetEditor() {
           theme={theme}
         />
       )}
+
+      {/* Clear Modal */}
+      <ConfirmClearModal
+        visible={showClearConfirm}
+        onConfirm={handleClear}
+        onCancel={() => setShowClearConfirm(false)}
+        theme={theme}
+      />
 
       {/* Delete Modals */}
       <ConfirmDeleteModal

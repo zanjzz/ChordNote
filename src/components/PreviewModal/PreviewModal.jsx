@@ -1,4 +1,3 @@
-// src/components/PreviewModal/PreviewModal.jsx
 import React, {
   useEffect,
   useRef,
@@ -52,7 +51,7 @@ export default function PreviewModal({
 }) {
   // ---- State ----
   const [lineHeight, setLineHeight] = useState(1.3);
-  const [metaLyricsGap, setMetaLyricsGap] = useState(1.0); // renamed from titleMetaSize
+  const [metaLyricsGap, setMetaLyricsGap] = useState(1.0);
   const [paddingSize, setPaddingSize] = useState(130);
   const [canvasTheme, setCanvasTheme] = useState("light");
   const [customCanvasColor, setCustomCanvasColor] = useState("#FDFCFA");
@@ -61,14 +60,12 @@ export default function PreviewModal({
   const [labelSpacing, setLabelSpacing] = useState(1.0);
   const [blockSpacing, setBlockSpacing] = useState(1.0);
 
-  // ---- Independent Font Controls ----
   const [titleFontSize, setTitleFontSize] = useState(24);
   const [titleColor, setTitleColor] = useState("#22221F");
   const [titleFont, setTitleFont] = useState(
     "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   );
 
-  // Meta font controls (author, key, BPM, capo)
   const [metaFontSize, setMetaFontSize] = useState(15);
   const [metaColor, setMetaColor] = useState("#77746A");
   const [metaFont, setMetaFont] = useState(
@@ -90,7 +87,6 @@ export default function PreviewModal({
     "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   );
 
-  // ---- Chord Background Options ----
   const [showChordBg, setShowChordBg] = useState(true);
   const [chordBgColor, setChordBgColor] = useState("#0F6E56");
   const [chordBgOpacity, setChordBgOpacity] = useState(0.15);
@@ -107,7 +103,6 @@ export default function PreviewModal({
   const helpersRef = useRef(null);
   const cacheRef = useRef(new Map());
 
-  // ---- Detect mobile layout ----
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -142,7 +137,7 @@ export default function PreviewModal({
       JSON.stringify([
         fontSize,
         lineHeight,
-        metaLyricsGap, // renamed
+        metaLyricsGap,
         paddingSize,
         canvasTheme,
         customCanvasColor,
@@ -225,7 +220,6 @@ export default function PreviewModal({
     ],
   );
 
-  // ---- Import canvas helpers & Generate pages ----
   useEffect(() => {
     if (!showPreview) return;
     let cancelled = false;
@@ -247,7 +241,7 @@ export default function PreviewModal({
         capo,
         columns,
         lineHeight,
-        metaLyricsGap, // renamed
+        metaLyricsGap,
         paddingSize,
         canvasTheme,
         customCanvasColor,
@@ -286,7 +280,6 @@ export default function PreviewModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPreview, settingsKey]);
 
-  // ---- Build Current Canvas ----
   const currentCanvas = useMemo(() => {
     if (!showPreview || !helpersRef.current || !pageRanges.length) return null;
     const { buildSingleCanvas } = helpersRef.current;
@@ -309,7 +302,7 @@ export default function PreviewModal({
       endLine: range.end,
       pageNum: currentPage,
       lineHeight,
-      metaLyricsGap, // renamed
+      metaLyricsGap,
       paddingSize,
       canvasTheme,
       customCanvasColor,
@@ -340,7 +333,6 @@ export default function PreviewModal({
     });
   }, [showPreview, pageRanges, currentPage, settingsKey]);
 
-  // ---- Pre-cache OTHER pages ----
   useEffect(() => {
     if (!showPreview || !helpersRef.current || !pageRanges.length) return;
     const { buildSingleCanvas } = helpersRef.current;
@@ -628,7 +620,6 @@ export default function PreviewModal({
 
   if (!showPreview) return null;
 
-  // ---- Theme colors ----
   const modalBg = appTheme === "dark" ? "#181715" : "#FDFCFA";
   const borderColor = appTheme === "dark" ? "#3B3833" : "#E5E2D9";
   const panelBg = appTheme === "dark" ? "#1F1C19" : "#F8F6F2";
@@ -663,11 +654,22 @@ export default function PreviewModal({
                   maxWidth / currentCanvas.width,
                   maxHeight / currentCanvas.height,
                 );
-                el.width = currentCanvas.width * scale;
-                el.height = currentCanvas.height * scale;
+                // 👇 Same HiDPI fix as the main preview canvas — render
+                // at device-pixel resolution instead of CSS-pixel
+                // resolution so the zoomed-in view (where blur is most
+                // visible) is actually sharp.
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const displayWidth = currentCanvas.width * scale;
+                const displayHeight = currentCanvas.height * scale;
+                el.width = displayWidth * dpr;
+                el.height = displayHeight * dpr;
+                el.style.width = `${displayWidth}px`;
+                el.style.height = `${displayHeight}px`;
                 const ctx = el.getContext("2d");
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
-                ctx.scale(scale, scale);
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = "high";
+                ctx.scale(scale * dpr, scale * dpr);
                 ctx.drawImage(currentCanvas, 0, 0);
               }
             }}
@@ -714,7 +716,6 @@ export default function PreviewModal({
             boxSizing: "border-box",
           }}
         >
-          {/* Close button - default color from theme, hover uses textColor */}
           <button
             onClick={() => setShowPreview(false)}
             className="chord-close-btn"
@@ -737,7 +738,8 @@ export default function PreviewModal({
               cursor: "pointer",
               borderRadius: "50%",
               zIndex: 3,
-              transition: "background 0.2s ease, color 0.2s ease",
+              transition:
+                "background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), color 0.18s cubic-bezier(0.4, 0, 0.2, 1)",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background =
@@ -753,7 +755,6 @@ export default function PreviewModal({
             <X size={22} />
           </button>
 
-          {/* Canvas Preview */}
           <CanvasPreview
             currentCanvas={currentCanvas}
             pageRanges={pageRanges}
@@ -767,7 +768,6 @@ export default function PreviewModal({
             borderColor={borderColor}
           />
 
-          {/* Tools Sidebar */}
           <ToolsSidebar
             isMobile={isMobile}
             appTheme={appTheme}
@@ -777,14 +777,12 @@ export default function PreviewModal({
             textMutedColor={textMutedColor}
             activeBg={activeBg}
             inactiveBg={inactiveBg}
-            // Typography - Title
             titleFontSize={titleFontSize}
             setTitleFontSize={setTitleFontSize}
             titleColor={titleColor}
             setTitleColor={setTitleColor}
             titleFont={titleFont}
             setTitleFont={setTitleFont}
-            // Meta
             metaFontSize={metaFontSize}
             setMetaFontSize={setMetaFontSize}
             metaColor={metaColor}
@@ -793,21 +791,18 @@ export default function PreviewModal({
             setMetaFont={setMetaFont}
             metaLyricsGap={metaLyricsGap}
             setMetaLyricsGap={setMetaLyricsGap}
-            // Chord
             chordFontSize={chordFontSize}
             setChordFontSize={setChordFontSize}
             chordColor={chordColor}
             setChordColor={setChordColor}
             chordFont={chordFont}
             setChordFont={setChordFont}
-            // Lyric
             lyricFontSize={lyricFontSize}
             setLyricFontSize={setLyricFontSize}
             lyricColor={lyricColor}
             setLyricColor={setLyricColor}
             lyricFont={lyricFont}
             setLyricFont={setLyricFont}
-            // Label
             labelFontSize={labelFontSize}
             setLabelFontSize={setLabelFontSize}
             labelColor={labelColor}
@@ -817,7 +812,6 @@ export default function PreviewModal({
             showBrackets={showBrackets}
             setShowBrackets={setShowBrackets}
             adjustFont={adjustFont}
-            // Spacing
             lineHeight={lineHeight}
             setLineHeight={setLineHeight}
             labelSpacing={labelSpacing}
@@ -826,25 +820,20 @@ export default function PreviewModal({
             setPaddingSize={setPaddingSize}
             blockSpacing={blockSpacing}
             setBlockSpacing={setBlockSpacing}
-            // Layout
             columns={columns}
             setColumns={setColumns}
             alignment={alignment}
             setAlignment={setAlignment}
-            // Canvas
             canvasTheme={canvasTheme}
             setCanvasTheme={setCanvasTheme}
             customCanvasColor={customCanvasColor}
             setCustomCanvasColor={setCustomCanvasColor}
-            // Mode
             showChords={showChords}
             setShowChords={setShowChords}
-            // Export
             exporting={exporting}
             handleExport={handleExport}
             handlePDFExport={handlePDFExport}
             pageRanges={pageRanges}
-            // Chord Background
             showChordBg={showChordBg}
             setShowChordBg={setShowChordBg}
             chordBgColor={chordBgColor}

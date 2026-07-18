@@ -1,8 +1,17 @@
-// src/components/PreviewModal/CanvasPreview.jsx
 import React, { useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
 
 const RESIZE_DEBOUNCE_MS = 80;
+
+// Buttery hover/press easing for pagination controls — itemized
+// properties instead of `all`, and a standard "ease-out" cubic-bezier
+// instead of the default `ease`, which reads as noticeably smoother for
+// small UI transitions like this.
+const BTN_TRANSITION =
+  "background-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), " +
+  "border-color 0.18s cubic-bezier(0.4, 0, 0.2, 1), " +
+  "transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), " +
+  "box-shadow 0.18s cubic-bezier(0.4, 0, 0.2, 1)";
 
 export default function CanvasPreview({
   currentCanvas,
@@ -56,11 +65,29 @@ export default function CanvasPreview({
       maxWidth / currentCanvas.width,
       maxHeight / currentCanvas.height,
     );
-    el.width = currentCanvas.width * scale;
-    el.height = currentCanvas.height * scale;
+
+    // 👇 Render at device-pixel resolution, not CSS-pixel resolution.
+    // Before, el.width/el.height were set to the *displayed* size, so on
+    // any HiDPI screen (basically every phone, and retina desktops) the
+    // browser stretched a 1x bitmap across 2-3x as many physical pixels
+    // — that's what made this look soft, especially on mobile. Capped at
+    // 2x so very high-density (3x+) phones don't pay for pixels nobody
+    // can see, keeping this cheap (a single drawImage call either way).
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const displayWidth = currentCanvas.width * scale;
+    const displayHeight = currentCanvas.height * scale;
+
+    el.width = displayWidth * dpr;
+    el.height = displayHeight * dpr;
+    el.style.width = `${displayWidth}px`;
+    el.style.height = `${displayHeight}px`;
+
     const ctx = el.getContext("2d");
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(scale, scale);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.scale(scale * dpr, scale * dpr);
     ctx.drawImage(currentCanvas, 0, 0);
   }, [currentCanvas, isMobile]);
 
@@ -107,7 +134,17 @@ export default function CanvasPreview({
         style={{
           flex: isMobile ? "none" : 5.5,
           minWidth: 0,
-          minHeight: isMobile ? "50vh" : "auto",
+          // 👇 FIX: was `minHeight: "50vh"` — a floor only, which let the
+          // container grow to fit whatever the canvas rendered at. Since
+          // the canvas's own size is computed FROM this container's
+          // measured height, that created a feedback loop: draw → box
+          // grows to fit → next redraw measures a bigger box → draws an
+          // even bigger canvas → repeat (the "grows on every click, up
+          // to ~3 times" bug). A real fixed height breaks the loop —
+          // every measurement is identical, so the computed size is
+          // stable from the very first draw. `overflow: hidden` below
+          // was already there but couldn't help without an actual cap.
+          height: isMobile ? "50vh" : "auto",
           background: appTheme === "dark" ? "#22221F" : "#F0EEE8",
           display: "flex",
           flexDirection: "column",
@@ -125,7 +162,7 @@ export default function CanvasPreview({
             position: "relative",
             cursor: "zoom-in",
             maxWidth: "100%",
-            transition: "transform 0.2s ease",
+            transition: "transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.transform = "scale(1.01)")
@@ -146,8 +183,6 @@ export default function CanvasPreview({
                   : canvasTheme === "custom"
                     ? customCanvasColor
                     : "#FDFCFA",
-              width: "auto",
-              height: "auto",
               display: "block",
               transition: "box-shadow 0.2s ease",
             }}
@@ -199,7 +234,7 @@ export default function CanvasPreview({
                 alignItems: "center",
                 gap: "4px",
                 fontSize: "13px",
-                transition: "all 0.2s ease",
+                transition: BTN_TRANSITION,
                 boxShadow: "none",
               }}
               onMouseEnter={(e) => {
@@ -254,7 +289,7 @@ export default function CanvasPreview({
                 alignItems: "center",
                 gap: "4px",
                 fontSize: "13px",
-                transition: "all 0.2s ease",
+                transition: BTN_TRANSITION,
                 boxShadow: "none",
               }}
               onMouseEnter={(e) => {

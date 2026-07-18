@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { isSectionLabel, labelText } from "../utils/sectionHelpers";
 import { normalizeChordLine } from "../utils/chordTranspose";
 import { convertChordLine } from "../utils/nashvilleNumbers";
+import { useResizableHeight } from "../hooks/useResizableHeight.js"; // 👈 NEW
 
 export default function ChordsPanel({
   lines,
@@ -18,6 +19,7 @@ export default function ChordsPanel({
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [focusedIndex, setFocusedIndex] = useState(null);
   const inputRefs = useRef({});
+  const { height, startDragging } = useResizableHeight(380, { min: 180 }); // 👈 NEW
 
   const setInputRef = (index) => (el) => {
     if (el) {
@@ -118,10 +120,11 @@ export default function ChordsPanel({
         style={{
           background: theme.panel,
           border: `1px solid ${theme.border}`,
-          height: "380px", // 👈 FIXED HEIGHT - scrollable container
+          borderBottom: "none", // 👈 NEW: handle bar below owns the bottom border
+          borderRadius: "10px 10px 0 0", // 👈 NEW: bottom rounding now lives on the handle
+          height: `${height}px`, // 👈 CHANGED: driven by drag state, not a fixed value
           overflowY: "auto",
           overflowX: "hidden",
-          resize: "vertical",
           textAlign: "left",
           padding: "12px 12px",
           boxSizing: "border-box",
@@ -225,10 +228,11 @@ export default function ChordsPanel({
                       color: chordColor,
                       padding: "2px 4px",
                       textAlign: "left",
-                      minHeight: `${editorFontSize * 1.2}px`,
+                      minHeight: `${editorFontSize * 0.9}px`,
+                      lineHeight: 1.2,
                       letterSpacing: "0.02em",
-                      whiteSpace: "pre-wrap", // fix overflow
-                      wordBreak: "break-word", // fix overflow
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
                       fontFamily:
                         "var(--font-mono, 'JetBrains Mono', monospace)",
                       cursor: "text",
@@ -259,6 +263,34 @@ export default function ChordsPanel({
             ),
           )
         )}
+      </div>
+
+      {/* 👇 NEW: full-width drag handle, replaces native corner resize */}
+      <div
+        onMouseDown={startDragging}
+        onTouchStart={startDragging}
+        style={{
+          height: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: theme.borderSoft,
+          border: `1px solid ${theme.border}`,
+          borderTop: "none",
+          borderRadius: "0 0 10px 10px",
+          cursor: "row-resize",
+          touchAction: "none",
+        }}
+      >
+        <div
+          style={{
+            width: "36px",
+            height: "4px",
+            borderRadius: "2px",
+            background: theme.textMuted,
+            opacity: 0.6,
+          }}
+        />
       </div>
 
       <style>{`

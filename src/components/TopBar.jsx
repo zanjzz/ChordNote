@@ -1,6 +1,6 @@
 // src/components/TopBar.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Sun, Moon, Save, Folder, Menu, X } from "lucide-react";
+import { Sun, Moon, Save, Folder, Menu, X, Trash2 } from "lucide-react";
 
 import whiteLogo from "../assets/default-monochrome-white.svg";
 import darkLogo from "../assets/default-monochrome-black.svg";
@@ -12,6 +12,7 @@ export default function TopBar({
   onSave,
   onViewSaved,
   savedCount,
+  onClear, // 👈 New prop
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -106,6 +107,16 @@ export default function TopBar({
         </button>
 
         <button
+          onClick={onClear}
+          style={btnStyle}
+          onMouseEnter={hoverIn}
+          onMouseLeave={hoverOutPanel}
+          title="Clear all inputs"
+        >
+          <Trash2 size={14} /> Clear
+        </button>
+
+        <button
           onClick={() => setDarkMode((d) => !d)}
           style={btnStyle}
           onMouseEnter={hoverIn}
@@ -184,6 +195,18 @@ export default function TopBar({
             >
               <Folder size={16} color={theme.textMuted} />
               Saved ({savedCount})
+            </button>
+            <button
+              onClick={() => {
+                onClear();
+                setMenuOpen(false);
+              }}
+              style={menuItemStyle}
+              onMouseEnter={hoverIn}
+              onMouseLeave={hoverOutTransparent}
+            >
+              <Trash2 size={16} color={theme.textMuted} />
+              Clear
             </button>
             <button
               onClick={() => {

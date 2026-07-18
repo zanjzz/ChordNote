@@ -105,24 +105,51 @@ body {
   }
 }
 
-/* ----- Import modal (new) ----- */
-.chord-importer-overlay {
+/* ----- Modal overlays (Import + Preview) -----
+   Both shared identical position/flex-centering/padding, only
+   differing in background opacity and z-index — merged the common
+   part into a combined selector instead of repeating it twice. */
+.chord-importer-overlay,
+.chord-preview-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20, 19, 16, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
   padding: 24px;
 }
 
-.chord-importer-modal {
+.chord-importer-overlay {
+  background: rgba(20, 19, 16, 0.6);
+  z-index: 100;
+}
+
+.chord-preview-overlay {
+  background: rgba(20, 19, 16, 0.55);
+  z-index: 50;
+}
+
+/* ----- Modal boxes (Import + Preview) -----
+   Shared border-radius/shadow/width, merged for the same reason. */
+.chord-importer-modal,
+.chord-preview-inner {
   border-radius: 14px;
-  padding: 24px;
-  max-width: 600px;
   width: 100%;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.chord-importer-modal {
+  padding: 24px;
+  max-width: 600px;
+}
+
+.chord-preview-inner {
+  max-width: 860px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); /* slightly different shadow than importer, kept distinct */
 }
 
 .chord-importer-textarea {
@@ -136,29 +163,6 @@ body {
   box-sizing: border-box;
 }
 
-/* ----- Preview modal ----- */
-.chord-preview-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 19, 16, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  padding: 24px;
-}
-
-.chord-preview-inner {
-  border-radius: 14px;
-  width: 100%;
-  max-width: 860px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
 .chord-preview-toolbar {
   display: flex;
   align-items: center;
@@ -170,6 +174,11 @@ body {
   gap: 10px;
 }
 
+/* ⚠️ POSSIBLY DEAD — current Preview modal renders its title via
+   ctx.fillText() on a <canvas>, not as a DOM <h1>. This targets an
+   <h1> inside .chord-preview-sheet, which doesn't appear to exist in
+   the canvas-based render path. Grep your JSX for "chord-preview-sheet"
+   before deleting — keeping it for now since I can't fully verify. */
 .chord-preview-sheet {
   overflow-y: auto;
   padding: 32px 40px;
@@ -181,10 +190,20 @@ body {
   margin: 0 0 4px;
 }
 
-/* ----- Buttons ----- */
-.chord-btn-icon {
+/* ----- Buttons -----
+   .chord-btn-icon and .chord-btn-toggle shared display/align-items/
+   gap/border-radius/cursor/font-weight — merged the common part. */
+.chord-btn-icon,
+.chord-btn-toggle {
   display: flex;
   align-items: center;
+  gap: 5px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.chord-btn-icon {
   gap: 6px;
   padding: 7px 12px;
   font-size: 13px;
@@ -192,10 +211,15 @@ body {
   border: 1px solid #d8d5cb;
   background: #ffffff;
   color: #22221f;
-  cursor: pointer;
-  font-weight: 500;
 }
 
+.chord-btn-toggle {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* ⚠️ Standalone — verify StepBtn.jsx still uses this className before
+   assuming it's dead, that file wasn't part of this session. */
 .chord-btn-step {
   display: flex;
   align-items: center;
@@ -204,17 +228,6 @@ body {
   height: 22px;
   border-radius: 5px;
   cursor: pointer;
-}
-
-.chord-btn-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
-  font-size: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
 }
 
 /* ----- Bottom action bar (Import/Copy/Share/Preview) ----- */
@@ -276,6 +289,14 @@ body {
 
   .chord-editor-grid {
     grid-template-columns: 1fr !important;
+    gap: 28px !important; /* was inheriting desktop's 16px — too tight once stacked vertically */
+  }
+
+  /* Small breathing room under "Lyrics" / "Chords" labels specifically
+     on mobile — targets the first child span of each grid cell rather
+     than editing the components, since the labels aren't classed. */
+  .chord-editor-grid > div > span:first-child {
+    margin-bottom: 4px;
   }
 
   /* Title/Author keep a full row each; BPM/Key/Capo share a row
@@ -316,6 +337,8 @@ body {
 }
 
 @media (max-width: 480px) {
+  /* ⚠️ No other reference to this className anywhere in the file —
+     possibly dead, verify before removing. */
   .chord-editor-font-size {
     font-size: 14px !important;
   }
@@ -342,8 +365,10 @@ body {
 }
 
 /* ----- Print styles: only show the sheet content -----
-   Merged in from the second global stylesheet (unique — not duplicated
-   elsewhere in this file). */
+   Merged in from the second global stylesheet. .chord-print-content
+   IS confirmed live (used on PreviewModal's outer wrapper). The other
+   two below aren't confirmed against this session's files — verify
+   before deleting if you don't find them in your components. */
 @media print {
   body * {
     visibility: hidden;
@@ -368,9 +393,11 @@ body {
   .chord-print-overlay {
     display: none !important;
   }
+  /* ⚠️ Not confirmed against current CanvasPreview.jsx / ToolsSidebar.jsx */
   .chord-print-toolbar {
     display: none !important;
   }
+  /* ⚠️ Not confirmed against current CanvasPreview.jsx / ToolsSidebar.jsx */
   .chord-print-sheet-body {
     padding: 20px 30px !important;
     overflow: visible !important;

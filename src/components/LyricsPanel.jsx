@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Plus, Check, X } from "lucide-react";
 import { SECTION_PRESETS } from "../utils/sectionHelpers";
+import { useResizableHeight } from "../hooks/useResizableHeight.js"; // 👈 NEW
 
 export default function LyricsPanel({
   theme,
@@ -17,6 +18,7 @@ export default function LyricsPanel({
   const [hoveredSection, setHoveredSection] = useState(null);
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
+  const { height, startDragging } = useResizableHeight(380, { min: 180 }); // 👈 NEW
 
   const pendingScrollRef = useRef(false);
 
@@ -83,7 +85,7 @@ export default function LyricsPanel({
               boxSizing: "border-box",
               pointerEvents: "none",
               borderRight: `1px solid ${theme.borderSoft}`,
-              borderRadius: "10px 0 0 10px",
+              borderRadius: "10px 0 0 0", // 👈 CHANGED: bottom rounding moved to handle
             }}
           >
             {Array.from({ length: lineCount }, (_, i) => (
@@ -115,12 +117,11 @@ export default function LyricsPanel({
           className="chord-lyrics-textarea"
           style={{
             width: "100%",
-            minHeight: "380px", // fixed → min-height for safety
-            height: "auto",
-            resize: "vertical",
+            height: `${height}px`, // 👈 CHANGED: was minHeight + native resize
             background: theme.panel,
             border: `1px solid ${theme.border}`,
-            borderRadius: "10px",
+            borderBottom: "none", // 👈 NEW
+            borderRadius: "10px 10px 0 0", // 👈 CHANGED
             padding: "16px",
             paddingLeft: showLineNumbers ? "42px" : "16px",
             fontSize: `${editorFontSize}px`,
@@ -129,6 +130,34 @@ export default function LyricsPanel({
             boxSizing: "border-box",
             outline: "none",
             transition: "padding-left 0.15s ease",
+          }}
+        />
+      </div>
+
+      {/* 👇 NEW: full-width drag handle, replaces native corner resize */}
+      <div
+        onMouseDown={startDragging}
+        onTouchStart={startDragging}
+        style={{
+          height: "16px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: theme.borderSoft,
+          border: `1px solid ${theme.border}`,
+          borderTop: "none",
+          borderRadius: "0 0 10px 10px",
+          cursor: "row-resize",
+          touchAction: "none",
+        }}
+      >
+        <div
+          style={{
+            width: "36px",
+            height: "4px",
+            borderRadius: "2px",
+            background: theme.textMuted,
+            opacity: 0.6,
           }}
         />
       </div>
