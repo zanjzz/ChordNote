@@ -620,6 +620,12 @@ export default function ChordSheetEditor() {
       style={{ background: theme.page, color: theme.text }}
     >
       <style>{`
+        html, body {
+          background: ${theme.page};
+          transition: background 0.15s ease;
+        }
+
+
         a {
           color: ${theme.text} !important;
           text-decoration: none !important;
@@ -984,7 +990,7 @@ export default function ChordSheetEditor() {
             transition: "border-color 0.15s ease",
           }}
         >
-          <Printer size={22} style={{ width: 20, height: 20, flexShrink: 0 }} />{" "}
+          <Printer size={25} style={{ width: 15, height: 20, flexShrink: 0 }} />{" "}
           Preview & export
         </button>
       </div>

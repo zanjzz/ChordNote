@@ -41,6 +41,8 @@ body {
 .chord-app-container {
   min-height: 100vh;
   padding: 24px;
+  max-width: 2400px; /* caps line-length on huge/ultrawide screens */
+  margin: 0 auto; /* centers once viewport exceeds max-width */
   transition: background 0.15s ease, color 0.15s ease;
 }
 
