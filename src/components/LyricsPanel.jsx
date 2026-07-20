@@ -165,6 +165,7 @@ export default function LyricsPanel({
           style={{
             width: "100%",
             height: inModal ? "100%" : `${height}px`,
+            display: "block",
             background: theme.panel,
             border: `1px solid ${theme.border}`,
             // Main page: bottom border lives on the drag handle below it.
