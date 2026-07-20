@@ -16,15 +16,12 @@ export default function ChordsPanel({
   showLineNumbers,
   chordDisplayMode,
   musicKey,
-  inModal = false, // false on the main page (default), true inside the fullscreen overlay
-  onToggleFullscreen, // opens fullscreen from the main page, closes it from inside the overlay
+  inModal = false,
+  onToggleFullscreen,
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [focusedIndex, setFocusedIndex] = useState(null);
   const inputRefs = useRef({});
-  // Untouched — still drives the main-page height exactly as before.
-  // Inside the fullscreen overlay the panel is pinned to height: 100%
-  // instead, so this hook's value simply goes unused there.
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
 
   const setInputRef = (index) => (el) => {
@@ -89,6 +86,12 @@ export default function ChordsPanel({
 
   const isNashvilleMode = chordDisplayMode !== "letters";
   const noKey = !musicKey || musicKey.trim() === "";
+
+  // 👇 Detect light mode to set appropriate text-shadow for chords
+  const isLightTheme = theme.page === "#F5F5F5";
+  const chordTextShadow = isLightTheme
+    ? "0 0 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.6), 0 0 8px rgba(255,255,255,0.3)"
+    : "0 0 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.3)";
 
   return (
     <div
@@ -160,8 +163,6 @@ export default function ChordsPanel({
         style={{
           background: theme.panel,
           border: `1px solid ${theme.border}`,
-          // Main page: bottom border lives on the drag handle below it.
-          // In the overlay there's no handle, so this div owns all 4 sides.
           borderBottom: inModal ? `1px solid ${theme.border}` : "none",
           borderRadius: inModal ? "10px" : "10px 10px 0 0",
           height: inModal ? "100%" : `${height}px`,
@@ -282,6 +283,8 @@ export default function ChordsPanel({
                       transition: "background 0.15s ease",
                       overflowX: "hidden",
                       boxSizing: "border-box",
+                      // 👇 IMPORTANT FIX: guarantees readability regardless of chordColor
+                      textShadow: chordTextShadow,
                     }}
                   />
                   <div
@@ -308,9 +311,6 @@ export default function ChordsPanel({
         )}
       </div>
 
-      {/* Drag handle only makes sense on the main page — inside the
-          fullscreen overlay the panel is pinned to 100% of the overlay's
-          height and resize is disabled entirely. */}
       {!inModal && (
         <div
           onMouseDown={startDragging}

@@ -2,14 +2,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Info, X } from "lucide-react";
 
-export default function NashvilleHelp({ theme, chordColor, mode }) {
+export default function NashvilleHelp({ theme, chordColor, mode, darkMode }) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const tooltipTimeoutRef = useRef(null);
   const iconRef = useRef(null);
 
   const modeLabel = mode === "numbers" ? "Numbers" : "Roman";
-  const isDark = theme.page === "#181715" || false;
+  const isDark = darkMode; // 👈 use the passed prop
   const neutralColor = isDark ? "#EDEAE3" : "#22221F";
   const neutralBg = isDark ? "#3A3530" : "#E1F5EE";
 
@@ -44,7 +44,6 @@ export default function NashvilleHelp({ theme, chordColor, mode }) {
 
   return (
     <>
-      {/* 👇 STYLES DEFINED ONCE – prevents flicker on mobile */}
       <style>{`
         @keyframes tooltipFadeIn {
           from { opacity: 0; transform: translateX(-50%) translateY(6px); }
@@ -152,7 +151,7 @@ export default function NashvilleHelp({ theme, chordColor, mode }) {
         )}
       </div>
 
-      {/* Modal - styles are now pre-defined, no flicker */}
+      {/* Modal */}
       {modalOpen && (
         <div
           style={{

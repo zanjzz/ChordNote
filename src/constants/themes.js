@@ -1,28 +1,27 @@
-// src/constants/themes.js
 export const LIGHT_THEME = {
   page: "#F5F5F5",
   panel: "#FFFFFF",
   border: "#D8D5CB",
   borderSoft: "#F0EEE8",
   text: "#22221F",
-  textSecondary: "#77746A",
-  textMuted: "#9A9689",
+  textSecondary: "#5A5A5A", 
+  textMuted: "#777777", 
 };
 
 export const DARK_THEME = {
-  page: "#181715",
-  panel: "#221F1C",
-  border: "#3B3833",
-  borderSoft: "#2C2A26",
-  text: "#EDEAE3",
-  textSecondary: "#A8A398",
-  textMuted: "#78746A",
+  page: "#121212",
+  panel: "#1E1E1E",
+  border: "#333333",
+  borderSoft: "#2A2A2A",
+  text: "#F0F0F0",
+  textSecondary: "#B0B0B0",
+  textMuted: "#888888", 
 };
 
 export const CHORD_COLOR_PRESETS = [
-  { name: "Teal", value: "#0F6E56" },
-  { name: "Coral", value: "#B04A24" },
-  { name: "Blue", value: "#185FA5" },
-  { name: "Purple", value: "#463ac5" },
-  { name: "Pink", value: "#993556" },
+  { name: "Teal", value: "#21B494" },
+  { name: "Coral", value: "#E87A4D" },
+  { name: "Blue", value: "#4A8FE0" },
+  { name: "Purple", value: "#8C82E6" },
+  { name: "Pink", value: "#D95A8C" },
 ];

@@ -176,21 +176,7 @@ export default function ChordSheetEditor() {
   const [hoveredBtn, setHoveredBtn] = useState(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // 👇 which panel (if any) is showing fullscreen.
-  // 'lyrics' | 'chords' | null. IMPORTANT: unlike before, this no longer
-  // triggers rendering a *second* <LyricsPanel>/<ChordsPanel> instance.
-  // The exact same panel instance that lives in the main grid gets
-  // repositioned into a fullscreen overlay via CSS (see the wrapper divs
-  // around each panel below). This keeps the underlying <textarea> /
-  // contentEditable DOM node alive the whole time, which is what browser
-  // undo history (Ctrl+Z) is tied to — so undo history is no longer lost
-  // when entering/exiting fullscreen.
-  // 'lyrics' | 'chords' | null. The SAME LyricsPanel/ChordsPanel instance
-  // that lives in the main grid gets repositioned into a fullscreen
-  // overlay purely via inline CSS (position: fixed) toggled on its
-  // wrapper div — no portal, no remount — so undo history on the
-  // underlying <textarea>/contentEditable survives opening and closing
-  // fullscreen.
+  // fullscreen panel state
   const [fullscreenPanel, setFullscreenPanel] = useState(null);
 
   // ---- Refs ----
@@ -284,8 +270,7 @@ export default function ChordSheetEditor() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [showCopyMenu]);
 
-  // Escape closes the fullscreen panel, matching the same pattern the
-  // preview zoom already uses elsewhere in this app.
+  // Escape closes fullscreen panel
   useEffect(() => {
     if (!fullscreenPanel) return;
     const handleEsc = (e) => {
@@ -641,8 +626,7 @@ export default function ChordSheetEditor() {
     !milestoneToast.isLimit &&
     !milestoneCloseUnlocked;
 
-  // 👇 Shared styles for whichever panel is currently fullscreen. These
-  // wrap the SAME panel instance (not a duplicate) — see the grid below.
+  // fullscreen wrapper styles
   const fullscreenWrapperStyle = {
     position: "fixed",
     inset: 0,
@@ -664,7 +648,7 @@ export default function ChordSheetEditor() {
     borderRadius: "14px",
     width: "100%",
     maxWidth: "920px",
-    height: "min(88vh, 820px)", // slightly taller than before (was min(82vh, 760px))
+    height: "min(88vh, 820px)",
     padding: "20px",
     boxSizing: "border-box",
     boxShadow: "0 20px 60px rgba(0,0,0,0.35)",
@@ -684,7 +668,6 @@ export default function ChordSheetEditor() {
           background: ${theme.page};
           transition: background 0.15s ease;
         }
-
 
         a {
           color: ${theme.text} !important;
@@ -717,8 +700,8 @@ export default function ChordSheetEditor() {
           to { transform: scaleX(0); }
         }
 
-
         /* ---------- MOBILE OVERRIDES ONLY ---------- */
+               /* ---------- MOBILE OVERRIDES ONLY ---------- */
         @media (max-width: 768px) {
           .chord-meta-input {
             padding: 12px 14px !important;
@@ -726,19 +709,26 @@ export default function ChordSheetEditor() {
             min-height: 44px !important;
           }
           .chord-btn-step {
-            width: 36px !important;
-            height: 36px !important;
+            width: 40px !important;
+            height: 40px !important;
           }
           .chord-action-bar > button {
             padding: 14px 10px !important;
             font-size: 14px !important;
-            min-height: 48px !important;
+            min-height: 44px !important;
+            min-width: 44px !important;
+            gap: 8px !important;
           }
           .chord-controls-wrap {
             gap: 16px !important;
           }
           .chord-top-bar {
             gap: 16px !important;
+          }
+          /* UPDATED: Specifically targets color swatches instead of any button with a title */
+          .chord-color-swatch {
+            width: 28px !important;
+            height: 28px !important;
           }
         }
 
@@ -755,382 +745,378 @@ export default function ChordSheetEditor() {
         }
       `}</style>
 
-      <TopBar
-        darkMode={darkMode}
-        setDarkMode={setDarkMode}
-        chordColor={chordColor}
-        theme={theme}
-        onSave={handleSaveCurrentSong}
-        onViewSaved={() => setShowSavedSongs(true)}
-        savedCount={savedSongs.length}
-        onClear={() => setShowClearConfirm(true)}
-      />
+      {/* 👇 MAIN LANDMARK added */}
+      <main>
+        <TopBar
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          chordColor={chordColor}
+          theme={theme}
+          onSave={handleSaveCurrentSong}
+          onViewSaved={() => setShowSavedSongs(true)}
+          savedCount={savedSongs.length}
+          onClear={() => setShowClearConfirm(true)}
+        />
 
-      <div className="chord-meta-grid">
-        <MetaInput
-          theme={theme}
-          chordColor={chordColor}
-          label="Title"
-          value={title}
-          onChange={setTitle}
-          placeholder="Song title"
-        />
-        <MetaInput
-          theme={theme}
-          chordColor={chordColor}
-          label="Author"
-          value={author}
-          onChange={setAuthor}
-          placeholder="Artist / writer"
-        />
-        <MetaInput
-          theme={theme}
-          chordColor={chordColor}
-          label="BPM"
-          value={bpm}
-          onChange={setBpm}
-          placeholder="120"
-          validate="bpm"
-        />
-        <MetaInput
-          theme={theme}
-          chordColor={chordColor}
-          label="Key"
-          value={musicKey}
-          onChange={handleKeyChange}
-          placeholder="G"
-          validate="key"
-        />
-        <MetaInput
-          theme={theme}
-          chordColor={chordColor}
-          label="Capo"
-          value={capo}
-          onChange={setCapo}
-          placeholder="2nd fret"
-        />
-      </div>
+        <div className="chord-meta-grid">
+          <MetaInput
+            theme={theme}
+            chordColor={chordColor}
+            label="Title"
+            value={title}
+            onChange={setTitle}
+            placeholder="Song title"
+          />
+          <MetaInput
+            theme={theme}
+            chordColor={chordColor}
+            label="Author"
+            value={author}
+            onChange={setAuthor}
+            placeholder="Artist / writer"
+          />
+          <MetaInput
+            theme={theme}
+            chordColor={chordColor}
+            label="BPM"
+            value={bpm}
+            onChange={setBpm}
+            placeholder="120"
+            validate="bpm"
+          />
+          <MetaInput
+            theme={theme}
+            chordColor={chordColor}
+            label="Key"
+            value={musicKey}
+            onChange={handleKeyChange}
+            placeholder="G"
+            validate="key"
+          />
+          <MetaInput
+            theme={theme}
+            chordColor={chordColor}
+            label="Capo"
+            value={capo}
+            onChange={setCapo}
+            placeholder="2nd fret"
+          />
+        </div>
 
-      <ControlsBar
-        theme={theme}
-        chordColor={chordColor}
-        setChordColor={setChordColor}
-        transposeOffset={transposeOffset}
-        handleTranspose={handleTranspose}
-        editorFontSize={editorFontSize}
-        setEditorFontSize={setEditorFontSize}
-        EDITOR_MIN={EDITOR_MIN}
-        EDITOR_MAX={EDITOR_MAX}
-        clamp={clamp}
-        showLineNumbers={showLineNumbers}
-        setShowLineNumbers={setShowLineNumbers}
-        chordDisplayMode={chordDisplayMode}
-        setChordDisplayMode={setChordDisplayMode}
-        musicKey={musicKey}
-      />
+        <ControlsBar
+          theme={theme}
+          chordColor={chordColor}
+          setChordColor={setChordColor}
+          transposeOffset={transposeOffset}
+          handleTranspose={handleTranspose}
+          editorFontSize={editorFontSize}
+          setEditorFontSize={setEditorFontSize}
+          EDITOR_MIN={EDITOR_MIN}
+          EDITOR_MAX={EDITOR_MAX}
+          clamp={clamp}
+          showLineNumbers={showLineNumbers}
+          setShowLineNumbers={setShowLineNumbers}
+          chordDisplayMode={chordDisplayMode}
+          setChordDisplayMode={setChordDisplayMode}
+          musicKey={musicKey}
+          darkMode={darkMode}
+        />
 
-      {/* Each panel is rendered EXACTLY ONCE. When it's the active
-          fullscreenPanel, its wrapper div switches to fixed-overlay
-          styles via inline CSS, and inModal flips to true so the panel's
-          own internal layout fills the overlay. Because this is always
-          the same component instance (same position in the React tree,
-          never unmounted/remounted), the underlying <textarea> /
-          contentEditable DOM node — and the browser's native undo
-          (Ctrl+Z) history tied to it — survives opening and closing
-          fullscreen. */}
-      <div className="chord-editor-grid">
-        {/* This outer div is the ACTUAL grid item and never changes —
-            no inline style, no conditional logic, always a plain,
-            normal in-flow block box. That's what keeps it counted as a
-            real grid item at all times, so .chord-editor-grid's column
-            sizing can never be thrown off no matter what's fullscreen.
-            Only the div nested inside it toggles position: fixed. */}
-        <div>
-          <div
-            style={
-              fullscreenPanel === "lyrics" ? fullscreenWrapperStyle : undefined
-            }
-            onClick={
-              fullscreenPanel === "lyrics"
-                ? () => setFullscreenPanel(null)
-                : undefined
-            }
-          >
+        <div className="chord-editor-grid">
+          <div>
             <div
               style={
-                fullscreenPanel === "lyrics" ? fullscreenBoxStyle : undefined
+                fullscreenPanel === "lyrics"
+                  ? fullscreenWrapperStyle
+                  : undefined
               }
               onClick={
                 fullscreenPanel === "lyrics"
-                  ? (e) => e.stopPropagation()
+                  ? () => setFullscreenPanel(null)
                   : undefined
               }
             >
-              <LyricsPanel
-                theme={theme}
-                lyrics={lyrics}
-                setLyrics={setLyrics}
-                editorFontSize={editorFontSize}
-                addSection={addSection}
-                chordColor={chordColor}
-                showLineNumbers={showLineNumbers}
-                inModal={fullscreenPanel === "lyrics"}
-                onToggleFullscreen={() =>
-                  setFullscreenPanel(
-                    fullscreenPanel === "lyrics" ? null : "lyrics",
-                  )
+              <div
+                style={
+                  fullscreenPanel === "lyrics" ? fullscreenBoxStyle : undefined
                 }
-              />
+                onClick={
+                  fullscreenPanel === "lyrics"
+                    ? (e) => e.stopPropagation()
+                    : undefined
+                }
+              >
+                <LyricsPanel
+                  theme={theme}
+                  lyrics={lyrics}
+                  setLyrics={setLyrics}
+                  editorFontSize={editorFontSize}
+                  addSection={addSection}
+                  chordColor={chordColor}
+                  showLineNumbers={showLineNumbers}
+                  inModal={fullscreenPanel === "lyrics"}
+                  onToggleFullscreen={() =>
+                    setFullscreenPanel(
+                      fullscreenPanel === "lyrics" ? null : "lyrics",
+                    )
+                  }
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <div
-            style={
-              fullscreenPanel === "chords" ? fullscreenWrapperStyle : undefined
-            }
-            onClick={
-              fullscreenPanel === "chords"
-                ? () => setFullscreenPanel(null)
-                : undefined
-            }
-          >
+          <div>
             <div
               style={
-                fullscreenPanel === "chords" ? fullscreenBoxStyle : undefined
+                fullscreenPanel === "chords"
+                  ? fullscreenWrapperStyle
+                  : undefined
               }
               onClick={
                 fullscreenPanel === "chords"
-                  ? (e) => e.stopPropagation()
+                  ? () => setFullscreenPanel(null)
                   : undefined
               }
             >
-              <ChordsPanel
-                lines={lines}
-                chords={chords}
-                handleChordChange={handleChordChange}
-                editorFontSize={editorFontSize}
-                chordColor={chordColor}
-                theme={theme}
-                showLineNumbers={showLineNumbers}
-                chordDisplayMode={chordDisplayMode}
-                musicKey={musicKey}
-                inModal={fullscreenPanel === "chords"}
-                onToggleFullscreen={() =>
-                  setFullscreenPanel(
-                    fullscreenPanel === "chords" ? null : "chords",
-                  )
+              <div
+                style={
+                  fullscreenPanel === "chords" ? fullscreenBoxStyle : undefined
                 }
-              />
+                onClick={
+                  fullscreenPanel === "chords"
+                    ? (e) => e.stopPropagation()
+                    : undefined
+                }
+              >
+                <ChordsPanel
+                  lines={lines}
+                  chords={chords}
+                  handleChordChange={handleChordChange}
+                  editorFontSize={editorFontSize}
+                  chordColor={chordColor}
+                  theme={theme}
+                  showLineNumbers={showLineNumbers}
+                  chordDisplayMode={chordDisplayMode}
+                  musicKey={musicKey}
+                  inModal={fullscreenPanel === "chords"}
+                  onToggleFullscreen={() =>
+                    setFullscreenPanel(
+                      fullscreenPanel === "chords" ? null : "chords",
+                    )
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Action Bar - unchanged desktop layout */}
-      <div
-        className="chord-action-bar"
-        style={{
-          marginTop: "20px",
-        }}
-      >
-        <button
-          onClick={() => setShowImporter(true)}
-          onMouseEnter={() => setHoveredBtn("import")}
-          onMouseLeave={() => setHoveredBtn(null)}
+        {/* Bottom Action Bar */}
+        <div
+          className="chord-action-bar"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            background: "transparent",
-            color: theme.text,
-            border: `1px solid ${hoveredBtn === "import" ? chordColor : theme.border}`,
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            transition: "border-color 0.15s ease",
+            marginTop: "20px",
           }}
         >
-          <FileText size={16} /> Import
-        </button>
-
-        <button
-          onClick={handleShare}
-          onMouseEnter={() => setHoveredBtn("share")}
-          onMouseLeave={() => setHoveredBtn(null)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            background: "transparent",
-            color: theme.text,
-            border: `1px solid ${hoveredBtn === "share" ? chordColor : theme.border}`,
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            transition: "border-color 0.15s ease",
-          }}
-        >
-          <Share2 size={16} /> Share
-        </button>
-
-        <button
-          ref={copyMenuRef}
-          onClick={() => setShowCopyMenu((v) => !v)}
-          onMouseEnter={() => setHoveredBtn("copy")}
-          onMouseLeave={() => setHoveredBtn(null)}
-          style={{
-            position: "relative",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            background: "transparent",
-            color: theme.text,
-            border: `1px solid ${hoveredBtn === "copy" ? chordColor : theme.border}`,
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            transition: "border-color 0.15s ease",
-          }}
-        >
-          <span className="chord-action-icon">
-            {copyFeedback ? (
-              <Check size={16} color={chordColor} />
-            ) : (
-              <Copy size={16} />
-            )}
-          </span>
-          {copyFeedback ? "Copied!" : "Copy"}
-          <ChevronDown
-            size={14}
+          <button
+            onClick={() => setShowImporter(true)}
+            onMouseEnter={() => setHoveredBtn("import")}
+            onMouseLeave={() => setHoveredBtn(null)}
             style={{
-              transform: showCopyMenu ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.15s ease",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              background: "transparent",
+              color: theme.text,
+              border: `1px solid ${hoveredBtn === "import" ? chordColor : theme.border}`,
+              borderRadius: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "border-color 0.15s ease",
             }}
-          />
+          >
+            <FileText size={16} /> Import
+          </button>
 
-          {showCopyMenu && (
-            <div
-              className="chord-copy-menu"
-              onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={handleShare}
+            onMouseEnter={() => setHoveredBtn("share")}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              background: "transparent",
+              color: theme.text,
+              border: `1px solid ${hoveredBtn === "share" ? chordColor : theme.border}`,
+              borderRadius: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "border-color 0.15s ease",
+            }}
+          >
+            <Share2 size={16} /> Share
+          </button>
+
+          <button
+            ref={copyMenuRef}
+            onClick={() => setShowCopyMenu((v) => !v)}
+            onMouseEnter={() => setHoveredBtn("copy")}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              background: "transparent",
+              color: theme.text,
+              border: `1px solid ${hoveredBtn === "copy" ? chordColor : theme.border}`,
+              borderRadius: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              transition: "border-color 0.15s ease",
+            }}
+          >
+            <span className="chord-action-icon">
+              {copyFeedback ? (
+                <Check size={16} color={chordColor} />
+              ) : (
+                <Copy size={16} />
+              )}
+            </span>
+            {copyFeedback ? "Copied!" : "Copy"}
+            <ChevronDown
+              size={14}
               style={{
-                position: "absolute",
-                bottom: "calc(100% + 10px)",
-                left: 0,
-                width: "100%",
-                minWidth: "auto",
-                boxSizing: "border-box",
-                background: theme.panel,
-                border: `1px solid ${theme.border}`,
-                borderRadius: "12px",
-                boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
-                padding: "6px",
-                zIndex: 10,
-                animation: "slideUp 0.18s ease",
+                transform: showCopyMenu ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.15s ease",
               }}
-            >
-              <button
-                onClick={() => handleCopy("lyrics")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "9px 10px",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: theme.text,
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = theme.borderSoft)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <FileText size={14} color={theme.textMuted} /> Lyrics only
-              </button>
-              <button
-                onClick={() => handleCopy("full")}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  width: "100%",
-                  textAlign: "left",
-                  padding: "9px 10px",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  color: theme.text,
-                  background: "transparent",
-                  border: "none",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = theme.borderSoft)
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "transparent")
-                }
-              >
-                <Copy size={14} color={theme.textMuted} /> Lyrics + chords
-              </button>
-            </div>
-          )}
-        </button>
+            />
 
-        <button
-          onClick={() => setShowPreview(true)}
-          onMouseEnter={() => setHoveredBtn("preview")}
-          onMouseLeave={() => setHoveredBtn(null)}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-            background: chordColor,
-            color: (() => {
-              const hex = chordColor.replace("#", "");
-              const r = parseInt(hex.substring(0, 2), 16);
-              const g = parseInt(hex.substring(2, 4), 16);
-              const b = parseInt(hex.substring(4, 6), 16);
-              const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-              return brightness > 140 ? "#22221F" : "#FFFFFF";
-            })(),
-            border: `1px solid ${hoveredBtn === "preview" ? theme.text : chordColor}`,
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-            transition: "border-color 0.15s ease",
-          }}
-        >
-          <Printer size={25} style={{ width: 15, height: 20, flexShrink: 0 }} />{" "}
-          Preview & Export
-        </button>
-      </div>
+            {showCopyMenu && (
+              <div
+                className="chord-copy-menu"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: "absolute",
+                  bottom: "calc(100% + 10px)",
+                  left: 0,
+                  width: "100%",
+                  minWidth: "auto",
+                  boxSizing: "border-box",
+                  background: theme.panel,
+                  border: `1px solid ${theme.border}`,
+                  borderRadius: "12px",
+                  boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
+                  padding: "6px",
+                  zIndex: 10,
+                  animation: "slideUp 0.18s ease",
+                }}
+              >
+                <button
+                  onClick={() => handleCopy("lyrics")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "9px 10px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: theme.text,
+                    background: "transparent",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = theme.borderSoft)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                >
+                  <FileText size={14} color={theme.textMuted} /> Lyrics only
+                </button>
+                <button
+                  onClick={() => handleCopy("full")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "9px 10px",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                    color: theme.text,
+                    background: "transparent",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = theme.borderSoft)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                >
+                  <Copy size={14} color={theme.textMuted} /> Lyrics + chords
+                </button>
+              </div>
+            )}
+          </button>
 
-      {/* Modals */}
+          <button
+            onClick={() => setShowPreview(true)}
+            onMouseEnter={() => setHoveredBtn("preview")}
+            onMouseLeave={() => setHoveredBtn(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "8px",
+              background: chordColor,
+              color: (() => {
+                const hex = chordColor.replace("#", "");
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                return brightness > 140 ? "#22221F" : "#FFFFFF";
+              })(),
+              border: `1px solid ${hoveredBtn === "preview" ? theme.text : chordColor}`,
+              borderRadius: "8px",
+              padding: "10px 18px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "border-color 0.15s ease",
+            }}
+          >
+            <Printer
+              size={25}
+              style={{ width: 15, height: 20, flexShrink: 0 }}
+            />{" "}
+            Preview & Export
+          </button>
+        </div>
+      </main>
+
+      {/* Modals (outside main) */}
       <PreviewModal
         appTheme={darkMode ? "dark" : "light"}
         showPreview={showPreview}

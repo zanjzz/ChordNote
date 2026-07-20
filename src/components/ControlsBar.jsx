@@ -4,13 +4,14 @@ import { Minus, Plus } from "lucide-react";
 import StepBtn from "./StepBtn.jsx";
 import NashvilleHelp from "./NashvilleHelp.jsx";
 
-const CHORD_COLOR_PRESETS = [
-  { name: "Teal", value: "#0F6E56" },
-  { name: "Coral", value: "#B04A24" },
-  { name: "Blue", value: "#185FA5" },
-  { name: "Purple", value: "#534AB7" },
-  { name: "Pink", value: "#993556" },
+export const CHORD_COLOR_PRESETS = [
+  { name: "Teal", value: "#029b7a" },
+  { name: "Coral", value: "#E87A4D" },
+  { name: "Blue", value: "#4A8FE0" },
+  { name: "Yellow", value: "#a5c40c" },
+  { name: "Pink", value: "#D95A8C" },
 ];
+
 
 export default function ControlsBar({
   theme,
@@ -28,6 +29,7 @@ export default function ControlsBar({
   chordDisplayMode,
   setChordDisplayMode,
   musicKey,
+  darkMode,
 }) {
   const isNashvilleMode = chordDisplayMode !== "letters";
 
@@ -41,15 +43,15 @@ export default function ControlsBar({
         alignItems: "center",
         padding: "30px 0 30px",
         borderBottom: `1px solid ${theme.borderSoft}`,
-        marginBottom: "24px", 
+        marginBottom: "24px",
       }}
     >
-      {/* Transpose */}
+      {/* Transpose - increased gap to 8px */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
         }}
       >
         <span
@@ -57,7 +59,6 @@ export default function ControlsBar({
             fontSize: "12px",
             fontWeight: 600,
             color: theme.textSecondary,
-            marginRight: "2px",
           }}
         >
           Transpose
@@ -67,6 +68,7 @@ export default function ControlsBar({
           theme={theme}
           onClick={() => handleTranspose(-1)}
           icon={<Minus size={14} />}
+          aria-label="Transpose down"
         />
         <span
           style={{
@@ -84,15 +86,16 @@ export default function ControlsBar({
           theme={theme}
           onClick={() => handleTranspose(1)}
           icon={<Plus size={14} />}
+          aria-label="Transpose up"
         />
       </div>
 
-      {/* Text size */}
+      {/* Text size - increased gap to 8px */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "6px",
+          gap: "8px",
         }}
       >
         <span
@@ -100,7 +103,6 @@ export default function ControlsBar({
             fontSize: "12px",
             fontWeight: 600,
             color: theme.textSecondary,
-            marginRight: "2px",
           }}
         >
           Size
@@ -112,6 +114,7 @@ export default function ControlsBar({
             setEditorFontSize((s) => clamp(s - 1, EDITOR_MIN, EDITOR_MAX))
           }
           icon={<Minus size={14} />}
+          aria-label="Decrease font size"
         />
         <span
           style={{
@@ -130,15 +133,16 @@ export default function ControlsBar({
             setEditorFontSize((s) => clamp(s + 1, EDITOR_MIN, EDITOR_MAX))
           }
           icon={<Plus size={14} />}
+          aria-label="Increase font size"
         />
       </div>
 
-      {/* Chord color */}
+      {/* Chord color - increased gap to 8px + added .chord-color-swatch class */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "4px",
+          gap: "8px",
         }}
       >
         <span
@@ -154,7 +158,9 @@ export default function ControlsBar({
         {CHORD_COLOR_PRESETS.map((c) => (
           <button
             key={c.value}
+            className="chord-color-swatch"
             onClick={() => setChordColor(c.value)}
+            aria-label={`Set chord color to ${c.name}`}
             title={c.name}
             style={{
               width: "18px",
@@ -176,6 +182,7 @@ export default function ControlsBar({
           type="color"
           value={chordColor}
           onChange={(e) => setChordColor(e.target.value)}
+          className="chord-color-swatch"
           style={{
             width: "20px",
             height: "20px",
@@ -186,10 +193,11 @@ export default function ControlsBar({
             borderRadius: "50%",
           }}
           title="Custom color"
+          aria-label="Custom chord color picker"
         />
       </div>
 
-      {/* Line numbers toggle */}
+      {/* Line numbers toggle - restored to standard pill shape */}
       <div
         style={{
           display: "flex",
@@ -209,6 +217,7 @@ export default function ControlsBar({
         <button
           onClick={() => setShowLineNumbers((v) => !v)}
           aria-pressed={showLineNumbers}
+          aria-label="Toggle line numbers"
           title="Toggle line numbers"
           style={{
             width: "34px",
@@ -246,7 +255,8 @@ export default function ControlsBar({
           gap: "6px",
         }}
       >
-        <span
+        <label
+          htmlFor="chord-display-mode"
           style={{
             fontSize: "12px",
             fontWeight: 600,
@@ -254,10 +264,12 @@ export default function ControlsBar({
           }}
         >
           Chords
-        </span>
+        </label>
         <select
+          id="chord-display-mode"
           value={chordDisplayMode}
           onChange={(e) => setChordDisplayMode(e.target.value)}
+          aria-label="Chord display mode"
           style={{
             padding: "6px 12px",
             paddingRight: "30px",
@@ -290,6 +302,7 @@ export default function ControlsBar({
             theme={theme}
             chordColor={chordColor}
             mode={chordDisplayMode}
+            darkMode={darkMode}
           />
         )}
       </div>
