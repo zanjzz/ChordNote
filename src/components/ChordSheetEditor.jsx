@@ -31,6 +31,7 @@ import { isSectionLabel, SECTION_PRESETS } from "../utils/sectionHelpers.js";
 import { convertChordLine } from "../utils/nashvilleNumbers.js";
 import { generatePages, downloadPages } from "../utils/canvasHelpers.js";
 import { encodeShareData, decodeShareData } from "../utils/shareCodec.js";
+import DOMPurify from "dompurify"; // 🛡️ Added for sanitization
 
 // ---- Hooks ----
 import { useChordRealignment } from "../hooks/useChordRealignment.js";
@@ -73,17 +74,33 @@ export default function ChordSheetEditor() {
     const params = new URLSearchParams(window.location.search);
     const sharedData = params.get("data");
 
+    // 🛡️ SAFEST CLEANING FUNCTION:
+    // - Strips any malicious HTML/JS via DOMPurify
+    // - Removes any plaintext URLs (both http:// and www.)
+    const cleanText = (text) => {
+      if (typeof text !== "string") return text;
+      let clean = DOMPurify.sanitize(text);
+      // Catch both "https://..." and "www.something..." (case-insensitive)
+      clean = clean.replace(
+        /(https?:\/\/[^\s]+|www\.[^\s]+)/gi,
+        "[link removed]",
+      );
+      return clean;
+    };
+
     if (sharedData) {
       try {
         const decoded = decodeShareData(sharedData);
         if (!decoded) throw new Error("Invalid share data");
+
+        // 🛡️ Apply cleaning to ALL user‑generated text fields
         return {
-          title: decoded.title || "",
-          author: decoded.author || "",
+          title: cleanText(decoded.title) || "",
+          author: cleanText(decoded.author) || "",
           bpm: decoded.bpm || "",
-          musicKey: decoded.musicKey || "",
-          capo: decoded.capo || "",
-          lyrics: decoded.lyrics || "",
+          musicKey: cleanText(decoded.musicKey) || "",
+          capo: cleanText(decoded.capo) || "",
+          lyrics: cleanText(decoded.lyrics) || "",
           chords: decoded.chords || {},
           transposeOffset: decoded.transposeOffset || 0,
           editorFontSize: decoded.editorFontSize || 15,
@@ -97,6 +114,7 @@ export default function ChordSheetEditor() {
       } catch (_) {}
     }
 
+    // If no shared data, load from localStorage as before
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -125,7 +143,7 @@ export default function ChordSheetEditor() {
 
   const initialState = loadInitialState();
 
-  // ---- State ----
+  // ---- State (unchanged) ----
   const [darkMode, setDarkMode] = useState(initialState.darkMode);
   const [chordColor, setChordColor] = useState(initialState.chordColor);
   const [title, setTitle] = useState(initialState.title);
@@ -319,7 +337,7 @@ export default function ChordSheetEditor() {
   const PREVIEW_MAX = 26;
   const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
-  // ---- Handlers ----
+  // ---- Handlers (unchanged) ----
   const handleChordChange = (index, value) => {
     setChords((prev) => ({ ...prev, [index]: value }));
   };
@@ -402,7 +420,7 @@ export default function ChordSheetEditor() {
     showToast("All inputs cleared.", "info");
   };
 
-  // ---- Copy functions ----
+  // ---- Copy functions (unchanged) ----
   const writeToClipboard = (text) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text);
@@ -486,7 +504,7 @@ export default function ChordSheetEditor() {
     }, 3000);
   };
 
-  // ---- Library functions ----
+  // ---- Library functions (unchanged) ----
   const handleSaveCurrentSong = () => {
     const newSong = {
       id: Date.now(),
@@ -626,7 +644,7 @@ export default function ChordSheetEditor() {
     !milestoneToast.isLimit &&
     !milestoneCloseUnlocked;
 
-  // fullscreen wrapper styles
+  // fullscreen wrapper styles (unchanged)
   const fullscreenWrapperStyle = {
     position: "fixed",
     inset: 0,
@@ -657,7 +675,7 @@ export default function ChordSheetEditor() {
     flexDirection: "column",
   };
 
-  // ---- Render ----
+  // ---- Render (unchanged) ----
   return (
     <div
       className="chord-app-container"
@@ -701,7 +719,6 @@ export default function ChordSheetEditor() {
         }
 
         /* ---------- MOBILE OVERRIDES ONLY ---------- */
-               /* ---------- MOBILE OVERRIDES ONLY ---------- */
         @media (max-width: 768px) {
           .chord-meta-input {
             padding: 12px 14px !important;
@@ -725,7 +742,6 @@ export default function ChordSheetEditor() {
           .chord-top-bar {
             gap: 16px !important;
           }
-          /* UPDATED: Specifically targets color swatches instead of any button with a title */
           .chord-color-swatch {
             width: 28px !important;
             height: 28px !important;
@@ -745,7 +761,6 @@ export default function ChordSheetEditor() {
         }
       `}</style>
 
-      {/* 👇 MAIN LANDMARK added */}
       <main>
         <TopBar
           darkMode={darkMode}
