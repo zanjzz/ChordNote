@@ -14,6 +14,25 @@ const SHARP_NOTES = [
   "B",
 ];
 
+const FLAT_NOTES = [
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B",
+];
+
+function getNoteName(idx, accidentalPreference) {
+  return accidentalPreference === "flat" ? FLAT_NOTES[idx] : SHARP_NOTES[idx];
+}
+
 const NOTE_TO_INDEX = {
   C: 0,
   "B#": 0,
@@ -46,10 +65,18 @@ const NOTE_TO_INDEX = {
  *   transposeChord("Am7", 2) → "Bm7"
  *   transposeChord("D/F#", -2) → "C/E"
  *   transposeChord("Cmaj7", 3) → "D#maj7"
+ *
+ * accidentalPreference ("sharp" | "flat") controls which enharmonic
+ * spelling is used for the result. Passing steps=0 is valid and useful
+ * on its own — it re-spells the chord in the new convention without
+ * changing its actual pitch (e.g. flipping the sharp/flat toggle).
  */
-export function transposeChord(chordLine, steps) {
+export function transposeChord(
+  chordLine,
+  steps,
+  accidentalPreference = "sharp",
+) {
   if (!chordLine) return chordLine;
-  if (steps === 0) return chordLine;
 
   // Parse the full chord structure
   // Matches: root, accidental, quality, extension, bass root, bass accidental
@@ -67,7 +94,7 @@ export function transposeChord(chordLine, steps) {
   if (rootIdx === undefined) return chordLine;
 
   const newRootIdx = (((rootIdx + steps) % 12) + 12) % 12;
-  const newRoot = SHARP_NOTES[newRootIdx];
+  const newRoot = getNoteName(newRootIdx, accidentalPreference);
 
   // Build the transposed chord
   let result = newRoot;
@@ -92,7 +119,7 @@ export function transposeChord(chordLine, steps) {
     const bassIdx = NOTE_TO_INDEX[bassKey];
     if (bassIdx !== undefined) {
       const newBassIdx = (((bassIdx + steps) % 12) + 12) % 12;
-      const newBass = SHARP_NOTES[newBassIdx];
+      const newBass = getNoteName(newBassIdx, accidentalPreference);
       result += `/${newBass}`;
     } else {
       // If bass note can't be transposed, preserve original
@@ -165,16 +192,22 @@ export function normalizeChordLine(line) {
 
 /**
  * Transposes a whole chord line (space-separated chords).
+ *
+ * accidentalPreference is forwarded to transposeChord for each token —
+ * see that function's docstring for details on steps=0 re-spelling.
  */
-export function transposeChordLine(line, steps) {
+export function transposeChordLine(
+  line,
+  steps,
+  accidentalPreference = "sharp",
+) {
   if (!line) return line;
-  if (steps === 0) return line;
 
   return line
     .split(/(\s+)/)
     .map((piece) => {
       if (/^\s+$/.test(piece)) return piece;
-      return transposeChord(piece, steps);
+      return transposeChord(piece, steps, accidentalPreference);
     })
     .join("");
 }
@@ -187,10 +220,13 @@ export function transposeChordLine(line, steps) {
  *   transposeKey("Am", 3) → "Cm"
  *   transposeKey("Bb", -1) → "A"
  *   transposeKey("C#m", 1) → "Dm"
+ *
+ * accidentalPreference ("sharp" | "flat") controls which enharmonic
+ * spelling is used for the result. Passing steps=0 re-spells the key
+ * in the new convention without changing its actual pitch.
  */
-export function transposeKey(keyString, steps) {
+export function transposeKey(keyString, steps, accidentalPreference = "sharp") {
   if (!keyString) return keyString;
-  if (steps === 0) return keyString;
 
   // Parse key: root, accidental, optional minor mode
   const match = /^([A-Ga-g])([#b]?)(m?)$/i.exec(keyString.trim());
@@ -202,7 +238,7 @@ export function transposeKey(keyString, steps) {
   if (rootIdx === undefined) return keyString;
 
   const newRootIdx = (((rootIdx + steps) % 12) + 12) % 12;
-  let newKey = SHARP_NOTES[newRootIdx];
+  let newKey = getNoteName(newRootIdx, accidentalPreference);
 
   // Preserve minor mode
   if (mode && mode.toLowerCase() === "m") {

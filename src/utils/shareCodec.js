@@ -22,6 +22,7 @@ const KEY_MAP = {
   darkMode: "dm",
   showLineNumbers: "sln",
   chordDisplayMode: "cdm",
+  accidentalPreference: "ap",
 };
 
 const REVERSE_KEY_MAP = Object.fromEntries(

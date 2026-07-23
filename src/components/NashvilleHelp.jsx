@@ -9,7 +9,7 @@ export default function NashvilleHelp({ theme, chordColor, mode, darkMode }) {
   const iconRef = useRef(null);
 
   const modeLabel = mode === "numbers" ? "Numbers" : "Roman";
-  const isDark = darkMode; // 👈 use the passed prop
+  const isDark = darkMode; 
   const neutralColor = isDark ? "#EDEAE3" : "#22221F";
   const neutralBg = isDark ? "#3A3530" : "#E1F5EE";
 

@@ -30,6 +30,8 @@ export default function ControlsBar({
   setChordDisplayMode,
   musicKey,
   darkMode,
+  accidentalPreference,
+  setAccidentalPreference,
 }) {
   const isNashvilleMode = chordDisplayMode !== "letters";
 
@@ -247,6 +249,96 @@ export default function ControlsBar({
         </button>
       </div>
 
+       {/* Sharp/Flat convention toggle — drives every transpose-generated
+          note name (chord roots, bass notes, and the Key field). Chords
+          typed manually still render exactly as typed either way; this
+          only decides which spelling a transpose lands on. */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "12px",
+            fontWeight: 600,
+            color: theme.textSecondary,
+          }}
+        >
+          Sharp / Flat
+        </span>
+        <div
+          style={{
+            display: "flex",
+            borderRadius: "6px",
+            border: `1px solid ${theme.border}`,
+            overflow: "hidden",
+          }}
+        >
+          <button
+            onClick={() => setAccidentalPreference("sharp")}
+            aria-pressed={accidentalPreference === "sharp"}
+            title="Use sharps (#)"
+            style={{
+              padding: "5px 10px",
+              fontSize: "12px",
+              fontWeight: 600,
+              border: "none",
+              cursor: "pointer",
+              background:
+                accidentalPreference === "sharp" ? chordColor : theme.panel,
+              color:
+                accidentalPreference === "sharp"
+                  ? (() => {
+                      const hex = chordColor.replace("#", "");
+                      const r = parseInt(hex.substring(0, 2), 16);
+                      const g = parseInt(hex.substring(2, 4), 16);
+                      const b = parseInt(hex.substring(4, 6), 16);
+                      const brightness =
+                        (r * 299 + g * 587 + b * 114) / 1000;
+                      return brightness > 140 ? "#22221F" : "#FFFFFF";
+                    })()
+                  : theme.textSecondary,
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+          >
+            ♯
+          </button>
+          <button
+            onClick={() => setAccidentalPreference("flat")}
+            aria-pressed={accidentalPreference === "flat"}
+            title="Use flats (♭)"
+            style={{
+              padding: "5px 10px",
+              fontSize: "12px",
+              fontWeight: 600,
+              border: "none",
+              borderLeft: `1px solid ${theme.border}`,
+              cursor: "pointer",
+              background:
+                accidentalPreference === "flat" ? chordColor : theme.panel,
+              color:
+                accidentalPreference === "flat"
+                  ? (() => {
+                      const hex = chordColor.replace("#", "");
+                      const r = parseInt(hex.substring(0, 2), 16);
+                      const g = parseInt(hex.substring(2, 4), 16);
+                      const b = parseInt(hex.substring(4, 6), 16);
+                      const brightness =
+                        (r * 299 + g * 587 + b * 114) / 1000;
+                      return brightness > 140 ? "#22221F" : "#FFFFFF";
+                    })()
+                  : theme.textSecondary,
+              transition: "background 0.15s ease, color 0.15s ease",
+            }}
+          >
+            ♭
+          </button>
+        </div>
+      </div>
+
       {/* Chord Display Mode selector */}
       <div
         style={{
@@ -263,7 +355,7 @@ export default function ControlsBar({
             color: theme.textSecondary,
           }}
         >
-          Chords
+          Chord Notation
         </label>
         <select
           id="chord-display-mode"

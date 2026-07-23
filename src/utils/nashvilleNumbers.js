@@ -179,6 +179,27 @@ const SHARP_NOTE_NAMES = [
   "B",
 ];
 
+const FLAT_NOTE_NAMES = [
+  "C",
+  "Db",
+  "D",
+  "Eb",
+  "E",
+  "F",
+  "Gb",
+  "G",
+  "Ab",
+  "A",
+  "Bb",
+  "B",
+];
+
+function noteNameFor(idx, accidentalPreference) {
+  return accidentalPreference === "flat"
+    ? FLAT_NOTE_NAMES[idx]
+    : SHARP_NOTE_NAMES[idx];
+}
+
 // Semitone of each scale degree in a major scale, before accidentals.
 const DEGREE_BASE_SEMITONE = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11 };
 
@@ -213,7 +234,12 @@ export const ROMAN_TOKEN_REGEX =
 
 // Converts a single Number or Roman token back into a letter chord,
 // relative to the given key semitone. Returns null if it can't be parsed.
-export function convertChordTokenToLetters(token, keySemitoneValue, mode) {
+export function convertChordTokenToLetters(
+  token,
+  keySemitoneValue,
+  mode,
+  accidentalPreference = "sharp",
+) {
   if (!token) return token;
   if (token === "N.C." || token === "N.C") return token;
   if (keySemitoneValue == null) return null;
@@ -226,16 +252,20 @@ export function convertChordTokenToLetters(token, keySemitoneValue, mode) {
 
     const rootDiff = degreeAccidentalToDiff(Number(degree), leadAcc);
     if (rootDiff == null) return null;
-    const rootLetter =
-      SHARP_NOTE_NAMES[(keySemitoneValue + rootDiff + 12) % 12];
+    const rootLetter = noteNameFor(
+      (keySemitoneValue + rootDiff + 12) % 12,
+      accidentalPreference,
+    );
 
     let result = rootLetter + (quality || "") + (ext || "");
 
     if (bassDegree) {
       const bassDiff = degreeAccidentalToDiff(Number(bassDegree), bassAcc);
       if (bassDiff != null) {
-        const bassLetter =
-          SHARP_NOTE_NAMES[(keySemitoneValue + bassDiff + 12) % 12];
+        const bassLetter = noteNameFor(
+          (keySemitoneValue + bassDiff + 12) % 12,
+          accidentalPreference,
+        );
         result += `/${bassLetter}`;
       }
     }
@@ -252,8 +282,10 @@ export function convertChordTokenToLetters(token, keySemitoneValue, mode) {
     if (!degree) return null;
     const rootDiff = degreeAccidentalToDiff(degree, leadAcc);
     if (rootDiff == null) return null;
-    const rootLetter =
-      SHARP_NOTE_NAMES[(keySemitoneValue + rootDiff + 12) % 12];
+    const rootLetter = noteNameFor(
+      (keySemitoneValue + rootDiff + 12) % 12,
+      accidentalPreference,
+    );
 
     const isLowercase = numeral === numeral.toLowerCase();
     let quality = "";
@@ -295,8 +327,10 @@ export function convertChordTokenToLetters(token, keySemitoneValue, mode) {
       if (bassDegree) {
         const bassDiff = degreeAccidentalToDiff(bassDegree, bassAcc);
         if (bassDiff != null) {
-          const bassLetter =
-            SHARP_NOTE_NAMES[(keySemitoneValue + bassDiff + 12) % 12];
+          const bassLetter = noteNameFor(
+            (keySemitoneValue + bassDiff + 12) % 12,
+            accidentalPreference,
+          );
           result += `/${bassLetter}`;
         }
       }

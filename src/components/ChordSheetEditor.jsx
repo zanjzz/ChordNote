@@ -110,6 +110,7 @@ export default function ChordSheetEditor() {
           darkMode: decoded.darkMode || false,
           showLineNumbers: decoded.showLineNumbers ?? false,
           chordDisplayMode: decoded.chordDisplayMode || "letters",
+          accidentalPreference: decoded.accidentalPreference || "sharp",
         };
       } catch (_) {}
     }
@@ -138,6 +139,7 @@ export default function ChordSheetEditor() {
       darkMode: false,
       showLineNumbers: false,
       chordDisplayMode: "letters",
+      accidentalPreference: "sharp",
     };
   };
 
@@ -172,6 +174,9 @@ export default function ChordSheetEditor() {
     const saved = localStorage.getItem("chordDisplayMode");
     return saved || initialState.chordDisplayMode || "letters";
   });
+  const [accidentalPreference, setAccidentalPreference] = useState(
+    initialState.accidentalPreference || "sharp",
+  );
   const [savedSongs, setSavedSongs] = useState(readSavedSongsFromStorage);
   const [copyFeedback, setCopyFeedback] = useState(null);
 
@@ -238,6 +243,7 @@ export default function ChordSheetEditor() {
       alignment,
       showLineNumbers,
       chordDisplayMode,
+      accidentalPreference,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [
@@ -256,6 +262,7 @@ export default function ChordSheetEditor() {
     alignment,
     showLineNumbers,
     chordDisplayMode,
+    accidentalPreference,
   ]);
 
   useEffect(() => {
@@ -346,22 +353,56 @@ export default function ChordSheetEditor() {
     setChords((prev) => {
       const next = {};
       Object.keys(prev).forEach((k) => {
-        const transposed = transposeChordLine(prev[k], steps);
+        const transposed = transposeChordLine(
+          prev[k],
+          steps,
+          accidentalPreference,
+        );
         next[k] = normalizeChordCase(transposed);
       });
       return next;
     });
 
     if (musicKey && musicKey.trim() !== "") {
-      setMusicKey(transposeKey(musicKey, steps));
+      setMusicKey(transposeKey(musicKey, steps, accidentalPreference));
     }
 
     setTransposeOffset((prev) => prev + steps);
   };
 
-  const handleKeyChange = (newKey) => {
-    setMusicKey(newKey);
-    setTransposeOffset(0);
+   const handleKeyChange = (newKey) => {
+     setMusicKey(newKey);
+     setTransposeOffset(0);
+    // Nudge the toggle to match what the user just typed — e.g. typing
+    // "Bb" switches to flat, "A#" switches to sharp. This only sets a
+    // default; the toggle remains fully user-controlled afterward.
+    if (newKey) {
+      if (/b/i.test(newKey) && !/#/.test(newKey)) {
+        setAccidentalPreference("flat");
+      } else if (/#/.test(newKey)) {
+        setAccidentalPreference("sharp");
+      }
+    }
+   };
+  
+    // Re-spells every existing chord and the Key field immediately when the
+  // user flips the sharp/flat toggle — steps=0 means the actual pitches
+  // never change, only which name (e.g. D# vs Eb) is used to display them.
+  const handleAccidentalPreferenceChange = (newPreference) => {
+    setAccidentalPreference(newPreference);
+
+    setChords((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((k) => {
+        const respelled = transposeChordLine(prev[k], 0, newPreference);
+        next[k] = normalizeChordCase(respelled);
+      });
+      return next;
+    });
+
+    if (musicKey && musicKey.trim() !== "") {
+      setMusicKey(transposeKey(musicKey, 0, newPreference));
+    }
   };
 
   const addSection = (label) => {
@@ -518,6 +559,7 @@ export default function ChordSheetEditor() {
       chordColor: chordColor || "#0F6E56",
       editorFontSize: editorFontSize || 15,
       transposeOffset: transposeOffset || 0,
+      accidentalPreference: accidentalPreference || "sharp",
     };
 
     setSavedSongs((prev) => {
@@ -579,6 +621,7 @@ export default function ChordSheetEditor() {
     setChordColor(song.chordColor || "#0F6E56");
     setEditorFontSize(song.editorFontSize || 15);
     setTransposeOffset(song.transposeOffset || 0);
+    setAccidentalPreference(song.accidentalPreference || "sharp");
     prevLinesRef.current = (song.lyrics || "").split("\n");
     clearedBackupRef.current = null;
   };
@@ -616,6 +659,7 @@ export default function ChordSheetEditor() {
       darkMode,
       showLineNumbers,
       chordDisplayMode,
+      accidentalPreference,
     };
     const encoded = encodeShareData(dataToShare);
     const shareUrl = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
@@ -835,6 +879,8 @@ export default function ChordSheetEditor() {
           setChordDisplayMode={setChordDisplayMode}
           musicKey={musicKey}
           darkMode={darkMode}
+          accidentalPreference={accidentalPreference}
+          setAccidentalPreference={handleAccidentalPreferenceChange}
         />
 
         <div className="chord-editor-grid">
