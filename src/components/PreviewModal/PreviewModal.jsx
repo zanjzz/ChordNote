@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 // Import local components
 import CanvasPreview from "./CanvasPreview.jsx";
@@ -99,6 +99,9 @@ export default function PreviewModal({
   const [exporting, setExporting] = useState(null);
   const [displayFontSize, setDisplayFontSize] = useState(fontSize);
 
+  const [downloadFeedback, setDownloadFeedback] = useState(null); // e.g. "PDF", "PNG", "JPG"
+  const downloadFeedbackTimeoutRef = useRef(null);
+
   const idleHandleRef = useRef(null);
   const helpersRef = useRef(null);
   const cacheRef = useRef(new Map());
@@ -129,8 +132,19 @@ export default function PreviewModal({
   useEffect(() => {
     return () => {
       if (idleHandleRef.current) cancelIdle(idleHandleRef.current);
+      if (downloadFeedbackTimeoutRef.current)
+        clearTimeout(downloadFeedbackTimeoutRef.current);
     };
   }, []);
+
+  const showDownloadFeedback = (label) => {
+    if (downloadFeedbackTimeoutRef.current)
+      clearTimeout(downloadFeedbackTimeoutRef.current);
+    setDownloadFeedback(label);
+    downloadFeedbackTimeoutRef.current = setTimeout(() => {
+      setDownloadFeedback(null);
+    }, 2800);
+  };
 
   const settingsKey = useMemo(
     () =>
@@ -505,6 +519,7 @@ export default function PreviewModal({
         chordBgPadding,
         chordBgRadius,
       });
+      showDownloadFeedback(ext.toUpperCase());
     } finally {
       setExporting(null);
     }
@@ -614,6 +629,7 @@ export default function PreviewModal({
       }
       const safeTitle = (title || "chord-sheet").replace(/[/\\?%*:|"<>]/g, "-");
       pdf.save(`${safeTitle}.pdf`);
+      showDownloadFeedback("PDF");
     } catch (error) {
       console.error("PDF export failed:", error);
     } finally {
@@ -633,6 +649,51 @@ export default function PreviewModal({
 
   return (
     <>
+      {downloadFeedback && (
+        <div
+          className="chord-download-toast"
+          style={{
+            position: "fixed",
+            left: "50%",
+            bottom: isMobile ? "28px" : "36px",
+            transform: "translateX(-50%)",
+            zIndex: 110,
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            background: panelBg,
+            color: textColor,
+            border: `1px solid ${borderColor}`,
+            padding: "12px 18px",
+            borderRadius: "12px",
+            boxShadow:
+              appTheme === "dark"
+                ? "0 8px 24px rgba(0,0,0,0.5)"
+                : "0 8px 24px rgba(0,0,0,0.18)",
+            fontSize: "14px",
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "20px",
+              height: "20px",
+              borderRadius: "50%",
+              background: textColor,
+              flexShrink: 0,
+            }}
+          >
+            <Check size={13} color={panelBg} strokeWidth={3} />
+          </span>
+          {downloadFeedback} downloaded
+        </div>
+      )}
+
       {zoomed && currentCanvas && (
         <div
           onClick={toggleZoom}
@@ -854,6 +915,18 @@ export default function PreviewModal({
       <style>{`
         .chord-spin { animation: chord-spin-anim 0.8s linear infinite; }
         @keyframes chord-spin-anim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .chord-download-toast {
+          animation: chord-toast-in 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+            chord-toast-out 0.25s cubic-bezier(0.4, 0, 0.2, 1) 2.5s forwards;
+        }
+        @keyframes chord-toast-in {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes chord-toast-out {
+          from { opacity: 1; transform: translateX(-50%) translateY(0); }
+          to { opacity: 0; transform: translateX(-50%) translateY(8px); }
+        }
         @media print {
           .chord-preview-overlay { background: none !important; padding: 0 !important; }
           .chord-preview-inner { box-shadow: none !important; border-radius: 0 !important; height: auto !important; max-height: none !important; max-width: 100% !important; flex-direction: column !important; }
