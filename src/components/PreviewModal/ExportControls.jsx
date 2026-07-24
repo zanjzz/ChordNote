@@ -47,7 +47,7 @@ export default function ExportControls({
       <SectionHeader
         color="#C2410C"
         mutedColor={textMutedColor}
-        fontSize="10px"
+        fontSize="13px"
       >
         Export {pageRanges.length > 1 ? `(${pageRanges.length} pages)` : "as"}
       </SectionHeader>

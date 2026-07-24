@@ -135,7 +135,7 @@ export default function ToolsSidebar(props) {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "16px", // 👈 Increased from 12px to 16px
+          gap: "16px",
           background: panelBg,
           borderRadius: "12px",
           padding: "16px 14px",
@@ -166,8 +166,6 @@ export default function ToolsSidebar(props) {
           setMetaColor={setMetaColor}
           metaFont={metaFont}
           setMetaFont={setMetaFont}
-          metaLyricsGap={metaLyricsGap}
-          setMetaLyricsGap={setMetaLyricsGap}
           // Chord
           chordFontSize={chordFontSize}
           setChordFontSize={setChordFontSize}
@@ -216,6 +214,8 @@ export default function ToolsSidebar(props) {
           setPaddingSize={setPaddingSize}
           blockSpacing={blockSpacing}
           setBlockSpacing={setBlockSpacing}
+          metaLyricsGap={metaLyricsGap}
+          setMetaLyricsGap={setMetaLyricsGap}
         />
 
         <LayoutControls

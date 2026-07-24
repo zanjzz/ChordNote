@@ -225,6 +225,7 @@ export default function CanvasPreview({
               disabled={currentPage === 0}
               style={{
                 padding: "6px 12px",
+                minWidth: "108px",
                 borderRadius: "6px",
                 border: `1px solid ${theme.border}`,
                 background: currentPage === 0 ? theme.borderSoft : theme.panel,
@@ -232,6 +233,7 @@ export default function CanvasPreview({
                 cursor: currentPage === 0 ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "4px",
                 fontSize: "13px",
                 transition: BTN_TRANSITION,
@@ -271,6 +273,7 @@ export default function CanvasPreview({
               disabled={currentPage === pageRanges.length - 1}
               style={{
                 padding: "6px 12px",
+                minWidth: "108px",
                 borderRadius: "6px",
                 border: `1px solid ${theme.border}`,
                 background:
@@ -287,6 +290,7 @@ export default function CanvasPreview({
                     : "pointer",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
                 gap: "4px",
                 fontSize: "13px",
                 transition: BTN_TRANSITION,

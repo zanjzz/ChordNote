@@ -128,9 +128,32 @@ function computeHeaderMetrics(
   };
 }
 
+// 👇 NEW: single source of truth for the "gap before a block/label" amount.
+// Used by both computeLabelHeight (the measurement pass, for page-break
+// and column-split decisions) and the actual draw loop in
+// buildSingleCanvas — previously the draw loop duplicated this formula
+// inline as `blockGap * blockSpacing`, which worked but meant any future
+// change here had to be kept in sync by hand in two places. Also this is
+// where blockSpacing's strength lives: before, a slider range of e.g.
+// 0.5–2 only ever multiplied `baseBlockGap` (scaledFontSize * 0.18) —
+// tiny compared to line/chord gaps, so the control barely did anything
+// visible. Anchored so blockSpacing === 1 behaves exactly as before (no
+// default-look change), but every unit away from 1 now adds/removes a
+// real, visible chunk of space between blocks.
+function computeBlockGapAmount(metrics, blockSpacing) {
+  const { baseBlockGap, scaledFontSize } = metrics;
+  const STRONG_BLOCK_GAP_PER_UNIT = scaledFontSize * 0.9;
+  return Math.max(
+    0,
+    baseBlockGap + (blockSpacing - 1) * STRONG_BLOCK_GAP_PER_UNIT,
+  );
+}
+
 function computeLabelHeight(metrics, blockSpacing, labelSpacing, isFirstBlock) {
-  const { baseBlockGap, labelTopGap, baseLabelHeight, baseLineGap } = metrics;
-  const beforeGap = isFirstBlock ? 0 : baseBlockGap * blockSpacing;
+  const { labelTopGap, baseLabelHeight, baseLineGap } = metrics;
+  const beforeGap = isFirstBlock
+    ? 0
+    : computeBlockGapAmount(metrics, blockSpacing);
   return (
     beforeGap +
     labelTopGap * blockSpacing +
@@ -238,6 +261,7 @@ export function buildSingleCanvas({
   startLine,
   endLine,
   pageNum,
+  totalPages = 1,
   lineHeight = 1.3,
   metaLyricsGap = 1.0, // renamed and default
   paddingSize = 130,
@@ -339,13 +363,6 @@ export function buildSingleCanvas({
 
   let columnLines, columnOffsets;
   if (columns === 2) {
-    // 👇 Rebuilt again: the previous "fill column 1 to capacity, spill the
-    // rest into column 2" approach fixed the old forced-50/50 bug, but
-    // over-corrected — column 1 was ALWAYS crammed right up to its budget
-    // regardless of how little content there was, while column 2 just got
-    // whatever happened to be left (often visibly emptier). What a real
-    // 2-up layout does: balance the two columns evenly, and only use a
-    // second column at all when the content genuinely doesn't fit in one.
     const lineHeights = measureLineHeights({
       pageLines,
       startLine,
@@ -369,56 +386,41 @@ export function buildSingleCanvas({
       // near-empty column just for the sake of using the layout.
       splitIdx = pageLines.length;
     } else {
-      // Balance toward the midpoint by height (not raw line count), so
-      // wrapped/chorded/label lines all count for their real weight.
-      const targetHeight = totalHeight / 2;
+      // 👇 CHANGED: fill column 1 to capacity first — normal document /
+      // newspaper column flow — instead of balancing toward the 50/50
+      // midpoint. Balancing was what caused the left column to sit with
+      // visible empty space at the bottom while the right column was
+      // full: it split by height *evenly*, not by "pack column 1 as
+      // full as it'll go". A real multi-column layout fills left to
+      // right, one column at a time.
       let cumulative = 0;
       splitIdx = pageLines.length;
       for (let i = 0; i < pageLines.length; i++) {
-        cumulative += lineHeights[i];
-        if (cumulative >= targetHeight) {
-          splitIdx = i + 1;
+        const next = cumulative + lineHeights[i];
+        if (next > singleColBodyBudget) {
+          splitIdx = i;
           break;
         }
+        cumulative = next;
       }
-
-      // Neither column may exceed its real capacity — a balanced split
-      // is only valid if it also fits. Walk the split back if column 1
-      // overshot its budget, then forward if column 2 overshot instead
-      // (only as far as column 1 still has room).
-      let col1Height = lineHeights
-        .slice(0, splitIdx)
-        .reduce((a, b) => a + b, 0);
-      while (splitIdx > 1 && col1Height > singleColBodyBudget) {
-        splitIdx--;
-        col1Height -= lineHeights[splitIdx];
-      }
-      let col2Height = totalHeight - col1Height;
-      while (
-        splitIdx < pageLines.length &&
-        col2Height > singleColBodyBudget &&
-        col1Height + lineHeights[splitIdx] <= singleColBodyBudget
-      ) {
-        col1Height += lineHeights[splitIdx];
-        col2Height -= lineHeights[splitIdx];
-        splitIdx++;
-      }
+      // Never leave column 1 empty — an oversized single first line has
+      // to go somewhere.
+      splitIdx = Math.max(splitIdx, 1);
 
       // Prefer to snap the split to a nearby [Section] label so a block
-      // doesn't get sliced across the column break — but only accept a
-      // snap that keeps both columns within their budget.
+      // doesn't get sliced across the column break — check backward
+      // first (pulling the break earlier keeps column 1 within budget),
+      // then forward as a fallback.
       const SPLIT_LABEL_TOLERANCE = 3;
-      const fitsAt = (idx) => {
-        const h1 = lineHeights.slice(0, idx).reduce((a, b) => a + b, 0);
-        return (
-          h1 <= singleColBodyBudget && totalHeight - h1 <= singleColBodyBudget
-        );
-      };
+      const fitsAt = (idx) =>
+        lineHeights.slice(0, idx).reduce((a, b) => a + b, 0) <=
+        singleColBodyBudget;
+
       let bestSnap = null;
       for (
         let i = splitIdx;
-        i <= Math.min(splitIdx + SPLIT_LABEL_TOLERANCE, pageLines.length - 1);
-        i++
+        i >= Math.max(splitIdx - SPLIT_LABEL_TOLERANCE, 1);
+        i--
       ) {
         if (isSectionLabel(pageLines[i]) && fitsAt(i)) {
           bestSnap = i;
@@ -427,9 +429,9 @@ export function buildSingleCanvas({
       }
       if (bestSnap === null) {
         for (
-          let i = splitIdx - 1;
-          i >= Math.max(splitIdx - SPLIT_LABEL_TOLERANCE, 0);
-          i--
+          let i = splitIdx + 1;
+          i <= Math.min(splitIdx + SPLIT_LABEL_TOLERANCE, pageLines.length - 1);
+          i++
         ) {
           if (isSectionLabel(pageLines[i]) && fitsAt(i)) {
             bestSnap = i;
@@ -572,23 +574,25 @@ export function buildSingleCanvas({
     });
   });
 
-  // 👇 The 1.4x cap below assumed extraSpace is always small "slack" left
-  // over from a near-full page (e.g. a hard cut that stopped a little
-  // early to avoid slicing a block). But a genuinely sparse page — most
-  // often the LAST page of the song, which just holds whatever few lines
-  // are left over — has a large extraSpace relative to its own content.
-  // Blindly filling that with the same per-unit cap applied it to every
-  // single line on a page with very few lines, which is what made spacing
-  // balloon dramatically on trailing pages. Fix: only fully justify-fill
-  // when the leftover is genuinely small relative to the page (real slack
-  // from break selection); scale the fill down the emptier the page is,
-  // so a mostly-empty page keeps close-to-normal spacing instead of being
-  // stretched to fill the whole remaining page height.
+  // 👇 CHANGED: this "stretch spacing to fill leftover page space" pass
+  // is what made line height inconsistent across pages of the same
+  // song — a nearly-full page (little/no extraSpace) rendered at close
+  // to base spacing, while a sparse trailing page (e.g. the last page,
+  // holding just a few leftover lines) had a huge extraSpace relative to
+  // its own tiny content, so it got stretched much looser than every
+  // page before it. That's a nice effect for a single-page song (fills
+  // the sheet nicely instead of clumping at the top) but actively wrong
+  // for a multi-page one, where every page should read at the same
+  // density. Fix: only ever apply the stretch when the whole document is
+  // a single page. Multi-page documents always render at base spacing
+  // on every page, so page 1 and page 4 look identical.
+  const isSinglePageDoc = totalPages <= 1;
   const FULL_FILL_WASTE_RATIO = 0.3; // leftover at or below this fraction of the page gets fully absorbed into spacing
   const extraSpaceRatio =
     totalBodyHeight > 0 ? extraSpace / totalBodyHeight : 0;
-  const fillScale =
-    extraSpaceRatio <= FULL_FILL_WASTE_RATIO
+  const fillScale = !isSinglePageDoc
+    ? 0
+    : extraSpaceRatio <= FULL_FILL_WASTE_RATIO
       ? 1
       : FULL_FILL_WASTE_RATIO / extraSpaceRatio;
   const effectiveExtraSpace = extraSpace * fillScale;
@@ -671,7 +675,7 @@ export function buildSingleCanvas({
 
       if (entry.isLabel) {
         if (!isFirstBlock) {
-          cy += blockGap * blockSpacing;
+          cy += computeBlockGapAmount(metrics, blockSpacing);
         }
         isFirstBlock = false;
         isInsideBlock = false;
@@ -1043,6 +1047,7 @@ export async function downloadPages({
       startLine: page.start,
       endLine: page.end,
       pageNum: idx,
+      totalPages: pages.length,
       lineHeight,
       metaLyricsGap,
       paddingSize,

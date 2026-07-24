@@ -25,8 +25,6 @@ export default function TypographyControls(props) {
     setMetaColor,
     metaFont,
     setMetaFont,
-    metaLyricsGap,
-    setMetaLyricsGap,
     // Chord
     chordFontSize,
     setChordFontSize,
@@ -185,53 +183,6 @@ export default function TypographyControls(props) {
     );
   }
 
-  function renderScaleRow(
-    label,
-    value,
-    setter,
-    min = 0.5,
-    max = 2.0,
-    step = 0.1,
-  ) {
-    const safeValue = value ?? 1.0;
-    const handleMinus = () => setter((v) => Math.max(min, (v ?? 1.0) - step));
-    const handlePlus = () => setter((v) => Math.min(max, (v ?? 1.0) + step));
-    return (
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginTop: "4px",
-        }}
-      >
-        <span style={{ fontSize: "13px" }}>{label}</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <StepBtn
-            theme={themeObj}
-            onClick={handleMinus}
-            icon={<Minus size={12} />}
-          />
-          <span
-            style={{
-              fontSize: "14px",
-              fontWeight: 600,
-              width: "32px",
-              textAlign: "center",
-            }}
-          >
-            {safeValue.toFixed(1)}
-          </span>
-          <StepBtn
-            theme={themeObj}
-            onClick={handlePlus}
-            icon={<Plus size={12} />}
-          />
-        </div>
-      </div>
-    );
-  }
-
   function renderBgSlider(
     label,
     value,
@@ -310,17 +261,9 @@ export default function TypographyControls(props) {
         10,
         44,
       )}
-      {renderScaleRow(
-        "Meta / Lyrics gap",
-        metaLyricsGap,
-        setMetaLyricsGap,
-        0.5,
-        2.0,
-        0.1,
-      )}
 
       {/* ---------- Meta ---------- */}
-      <div style={{ marginTop: "12px" }}>
+      <div style={{ marginTop: "20px" }}>
         {renderRow(
           "Meta",
           metaFontSize,
@@ -336,7 +279,7 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Chord ---------- */}
-      <div style={{ marginTop: "12px", minWidth: 0 }}>
+      <div style={{ marginTop: "20px", minWidth: 0 }}>
         <SectionHeader color="#B04A24" mutedColor={textMutedColor}>
           Chord
         </SectionHeader>
@@ -468,7 +411,7 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Lyrics ---------- */}
-      <div style={{ marginTop: "12px", minWidth: 0 }}>
+      <div style={{ marginTop: "20px", minWidth: 0 }}>
         <SectionHeader color="#534AB7" mutedColor={textMutedColor}>
           Lyrics
         </SectionHeader>
@@ -487,7 +430,7 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Labels ---------- */}
-      <div style={{ marginTop: "12px", minWidth: 0 }}>
+      <div style={{ marginTop: "20px", minWidth: 0 }}>
         <SectionHeader color="#2E9E4F" mutedColor={textMutedColor}>
           Labels
         </SectionHeader>

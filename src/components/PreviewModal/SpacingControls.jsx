@@ -1,4 +1,3 @@
-// src/components/PreviewModal/SpacingControls.jsx
 import React from "react";
 import { Minus, Plus } from "lucide-react";
 import StepBtn from "../StepBtn.jsx";
@@ -16,6 +15,8 @@ export default function SpacingControls({
   setPaddingSize,
   blockSpacing,
   setBlockSpacing,
+  metaLyricsGap,
+  setMetaLyricsGap,
 }) {
   const themeObj = {
     border: borderColor,
@@ -69,12 +70,71 @@ export default function SpacingControls({
     </div>
   );
 
+  // Same "scale row" this used to be in TypographyControls — relocated
+  // here since it's spacing, not typography. Handles the undefined
+  // default (1.0) the same way the original did.
+  const renderScaleSlider = (
+    label,
+    value,
+    setter,
+    min = 0.5,
+    max = 2.0,
+    step = 0.1,
+  ) => {
+    const safeValue = value ?? 1.0;
+    return (
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span style={{ fontSize: "13px" }}>{label}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <StepBtn
+            theme={themeObj}
+            onClick={() =>
+              setter((v) => Math.max(min, +((v ?? 1.0) - step).toFixed(1)))
+            }
+            icon={<Minus size={12} />}
+          />
+          <span
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              width: "36px",
+              textAlign: "center",
+            }}
+          >
+            {safeValue.toFixed(1)}
+          </span>
+          <StepBtn
+            theme={themeObj}
+            onClick={() =>
+              setter((v) => Math.min(max, +((v ?? 1.0) + step).toFixed(1)))
+            }
+            icon={<Plus size={12} />}
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div style={{ minWidth: 0 }}>
       <SectionHeader color="#993556" mutedColor={textMutedColor}>
         Spacing
       </SectionHeader>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {renderScaleSlider(
+          "Meta / Lyrics gap",
+          metaLyricsGap,
+          setMetaLyricsGap,
+          0.5,
+          2.0,
+          0.1,
+        )}
         {/*
           👇 Same min/max/default values as before (untouched, per request)
           — only the step size and displayed precision changed, so the
