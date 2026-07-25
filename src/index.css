@@ -1,8 +1,6 @@
-/* ----- Fonts & base reset -----
-   Merged in from the second global stylesheet — this is now the only
-   place these are defined. Delete/stop importing that other file once
-   you're using this one, or its rules will shadow these depending on
-   load order. */
+/* Fonts & base reset. This is the only stylesheet defining these —
+   stop importing the old duplicate copy, or load order will decide
+   which set of rules actually wins. */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
 :root {
@@ -20,29 +18,19 @@ body {
   padding: 0;
 }
 
-/* ----- Font utilities (for chords & lyrics) ----- */
+/* Monospace fields: chord input and the lyric line beneath it. */
 .chord-input,
 .chord-lyrics-textarea,
-.chord-line,
-.lyric-line,
 .mono {
   font-family: var(--font-mono) !important;
 }
 
-.section-label {
-  font-family: 'Merriweather', Georgia, serif;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-/* ----- Chord Sheet Editor specific layout ----- */
+/* Chord Sheet Editor layout */
 .chord-app-container {
   min-height: 100vh;
   padding: 24px;
-  max-width: 2400px; /* caps line-length on huge/ultrawide screens */
-  margin: 0 auto; /* centers once viewport exceeds max-width */
+  max-width: 2400px; /* caps line length on ultrawide screens */
+  margin: 0 auto;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -89,11 +77,8 @@ body {
   box-sizing: border-box;
 }
 
-/* ----- Top bar: desktop buttons vs. mobile hamburger -----
-   Desktop group shows by default (matches TopBar's inline flex
-   styling). Mobile group stays hidden until the phone breakpoint,
-   then the two swap. !important is intentional here — it's the only
-   way to override the wrapper's inline display style. */
+/* Top bar: desktop button row vs. mobile hamburger menu, swapped by
+   breakpoint below. !important overrides TopBar's inline display style. */
 .chord-topbar-actions-mobile {
   display: none;
 }
@@ -107,10 +92,7 @@ body {
   }
 }
 
-/* ----- Modal overlays (Import + Preview) -----
-   Both shared identical position/flex-centering/padding, only
-   differing in background opacity and z-index — merged the common
-   part into a combined selector instead of repeating it twice. */
+/* Import + Preview modal overlays — same layout, different tint/depth. */
 .chord-importer-overlay,
 .chord-preview-overlay {
   position: fixed;
@@ -131,8 +113,7 @@ body {
   z-index: 50;
 }
 
-/* ----- Modal boxes (Import + Preview) -----
-   Shared border-radius/shadow/width, merged for the same reason. */
+/* Import + Preview modal boxes — same shape, different size/shadow. */
 .chord-importer-modal,
 .chord-preview-inner {
   border-radius: 14px;
@@ -151,7 +132,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); /* slightly different shadow than importer, kept distinct */
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
 .chord-importer-textarea {
@@ -176,52 +157,7 @@ body {
   gap: 10px;
 }
 
-/* ⚠️ POSSIBLY DEAD — current Preview modal renders its title via
-   ctx.fillText() on a <canvas>, not as a DOM <h1>. This targets an
-   <h1> inside .chord-preview-sheet, which doesn't appear to exist in
-   the canvas-based render path. Grep your JSX for "chord-preview-sheet"
-   before deleting — keeping it for now since I can't fully verify. */
-.chord-preview-sheet {
-  overflow-y: auto;
-  padding: 32px 40px;
-}
-
-.chord-preview-sheet h1 {
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0 0 4px;
-}
-
-/* ----- Buttons -----
-   .chord-btn-icon and .chord-btn-toggle shared display/align-items/
-   gap/border-radius/cursor/font-weight — merged the common part. */
-.chord-btn-icon,
-.chord-btn-toggle {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.chord-btn-icon {
-  gap: 6px;
-  padding: 7px 12px;
-  font-size: 13px;
-  border-radius: 7px;
-  border: 1px solid #d8d5cb;
-  background: #ffffff;
-  color: #22221f;
-}
-
-.chord-btn-toggle {
-  padding: 6px 10px;
-  font-size: 12px;
-}
-
-/* ⚠️ Standalone — verify StepBtn.jsx still uses this className before
-   assuming it's dead, that file wasn't part of this session. */
+/* Buttons */
 .chord-btn-step {
   display: flex;
   align-items: center;
@@ -232,11 +168,10 @@ body {
   cursor: pointer;
 }
 
-/* ----- Bottom action bar (Import/Copy/Share/Preview) ----- */
-/* Grid instead of flex here on purpose — flex-based equal-width kept
-   drifting uneven once one button had more internal elements than the
-   others (Copy's dropdown arrow). Grid columns are equal by definition
-   regardless of content, so this is the version that actually holds up. */
+/* Bottom action bar (Import/Copy/Share/Preview). Grid, not flex —
+   flex's equal-width sizing drifted uneven once one button (Copy) had
+   more internal elements than the others. Grid columns stay equal
+   regardless of content. */
 .chord-action-bar {
   margin-left: auto;
   width: 45%;
@@ -248,7 +183,7 @@ body {
 
 .chord-action-bar > button {
   width: 100%;
-  padding: 7px 14px !important; /* shorter buttons than the old 10px 18px */
+  padding: 7px 14px !important;
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
@@ -256,7 +191,7 @@ body {
   transform: scale(0.97);
 }
 
-/* ----- Copy dropdown open animation ----- */
+/* Copy dropdown open animation */
 @keyframes chordCopyMenuIn {
   from {
     opacity: 0;
@@ -273,7 +208,7 @@ body {
   transform-origin: bottom right;
 }
 
-/* ----- Responsive adjustments (keep these) ----- */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .chord-app-container {
     padding: 18px !important;
@@ -283,25 +218,25 @@ body {
     width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
-    /* 2x2 instead of a forced 4-across row — that's what was making
-       the buttons collapse into unreadable slivers on phones. */
+    /* 2x2 instead of a forced 4-across row, which collapsed buttons
+       into unreadable slivers on phones. */
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
 
   .chord-editor-grid {
     grid-template-columns: 1fr !important;
-    gap: 28px !important; /* was inheriting desktop's 16px — too tight once stacked vertically */
+    gap: 28px !important; /* desktop's 16px was too tight stacked vertically */
   }
 
-  /* Small breathing room under "Lyrics" / "Chords" labels specifically
-     on mobile — targets the first child span of each grid cell rather
-     than editing the components, since the labels aren't classed. */
+  /* Breathing room under the "Lyrics" / "Chords" labels on mobile.
+     Targets the first child span of each grid cell since the labels
+     themselves aren't classed. */
   .chord-editor-grid > div > span:first-child {
     margin-bottom: 4px;
   }
 
-  /* Title/Author keep a full row each; BPM/Key/Capo share a row
+  /* Title/Author each keep a full row; BPM/Key/Capo share one row
      instead of stacking into 5 separate rows. */
   .chord-meta-grid {
     grid-template-columns: 1fr 1fr !important;
@@ -333,29 +268,15 @@ body {
     flex-wrap: wrap !important;
     gap: 8px !important;
   }
-  .chord-preview-sheet {
-    padding: 16px 20px !important;
-  }
 }
 
 @media (max-width: 480px) {
-  /* ⚠️ No other reference to this className anywhere in the file —
-     possibly dead, verify before removing. */
-  .chord-editor-font-size {
-    font-size: 14px !important;
-  }
-  .chord-preview-sheet h1 {
-    font-size: 18px !important;
-  }
-
-  /* Every field gets its own full-width row at this size — trying to
-     keep BPM/Key/Capo three-across gets too cramped to tap accurately. */
+  /* Every field gets its own full-width row at this size — three
+     across (BPM/Key/Capo) gets too cramped to tap accurately. */
   .chord-meta-grid {
     grid-template-columns: 1fr !important;
   }
 
-  /* Icon-above-label instead of hiding the icon outright — it reads
-     better as a compact tap target than text-only buttons do. */
   .chord-action-bar > button {
     flex-direction: column !important;
     gap: 4px !important;
@@ -366,11 +287,7 @@ body {
   }
 }
 
-/* ----- Print styles: only show the sheet content -----
-   Merged in from the second global stylesheet. .chord-print-content
-   IS confirmed live (used on PreviewModal's outer wrapper). The other
-   two below aren't confirmed against this session's files — verify
-   before deleting if you don't find them in your components. */
+/* Print: show only the sheet content, nothing else on the page. */
 @media print {
   body * {
     visibility: hidden;
@@ -391,20 +308,5 @@ body {
     background: #fdfcfa !important;
     box-shadow: none !important;
     border-radius: 0 !important;
-  }
-  .chord-print-overlay {
-    display: none !important;
-  }
-  /* ⚠️ Not confirmed against current CanvasPreview.jsx / ToolsSidebar.jsx */
-  .chord-print-toolbar {
-    display: none !important;
-  }
-  /* ⚠️ Not confirmed against current CanvasPreview.jsx / ToolsSidebar.jsx */
-  .chord-print-sheet-body {
-    padding: 20px 30px !important;
-    overflow: visible !important;
-  }
-  .chord-print-sheet-body h1 {
-    font-size: 22px !important;
   }
 }
