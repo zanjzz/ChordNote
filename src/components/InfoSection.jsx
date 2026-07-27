@@ -91,8 +91,8 @@ export default function InfoSection({ theme, chordColor }) {
               marginBottom: "16px",
             }}
           >
-            ChordNote is a free online lyrics and chord editor that runs
-            entirely in your browser. Create new chord sheets or edit existing
+            ChordNote is a free online lyrics and chord editor.
+            Create new chord sheets or edit existing
             ones by writing your lyrics, placing chords exactly where you want
             them, and customizing everything with no installation or account
             required.
