@@ -29,7 +29,7 @@ body {
 .chord-app-container {
   min-height: 100vh;
   padding: 24px;
-  max-width: 2400px; /* caps line length on ultrawide screens */
+  max-width: 1440px; /* caps line length on ultrawide screens */
   margin: 0 auto;
   transition: background 0.15s ease, color 0.15s ease;
 }

@@ -45,6 +45,7 @@ import ChordsPanel from "./ChordsPanel.jsx";
 import PreviewModal from "./PreviewModal/PreviewModal.jsx";
 import ChordImporter from "./ChordImporter.jsx";
 import SavedSongsModal from "./SavedSongsModal.jsx";
+import InfoSection from "./InfoSection.jsx";
 import SupportBanner from "./SupportBanner.jsx";
 import Footer from "./Footer.jsx";
 
@@ -1284,6 +1285,7 @@ export default function ChordSheetEditor() {
         onClose={closeMilestoneToast}
       />
 
+      <InfoSection theme={theme} chordColor={chordColor} />
       <SupportBanner theme={theme} darkMode={darkMode} />
       <Footer theme={theme} darkMode={darkMode} chordColor={chordColor} />
     </div>
