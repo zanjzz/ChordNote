@@ -146,7 +146,7 @@ export default function ChordSheetEditor() {
 
   const initialState = loadInitialState();
 
-  // ---- State (unchanged) ----
+  // ---- State ----
   const [darkMode, setDarkMode] = useState(initialState.darkMode);
   const [chordColor, setChordColor] = useState(initialState.chordColor);
   const [title, setTitle] = useState(initialState.title);
@@ -345,7 +345,7 @@ export default function ChordSheetEditor() {
   const PREVIEW_MAX = 26;
   const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
-  // ---- Handlers (unchanged) ----
+  // ---- Handlers ----
   const handleChordChange = (index, value) => {
     setChords((prev) => ({ ...prev, [index]: value }));
   };
@@ -462,7 +462,7 @@ export default function ChordSheetEditor() {
     showToast("All inputs cleared.", "info");
   };
 
-  // ---- Copy functions (unchanged) ----
+  // ---- Copy functions ----
   const writeToClipboard = (text) => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       return navigator.clipboard.writeText(text);
@@ -546,7 +546,7 @@ export default function ChordSheetEditor() {
     }, 3000);
   };
 
-  // ---- Library functions (unchanged) ----
+  // ---- Library functions ----
   const handleSaveCurrentSong = () => {
     const newSong = {
       id: Date.now(),
@@ -689,7 +689,7 @@ export default function ChordSheetEditor() {
     !milestoneToast.isLimit &&
     !milestoneCloseUnlocked;
 
-  // fullscreen wrapper styles (unchanged)
+  // fullscreen wrapper styles
   const fullscreenWrapperStyle = {
     position: "fixed",
     inset: 0,
@@ -720,7 +720,7 @@ export default function ChordSheetEditor() {
     flexDirection: "column",
   };
 
-  // ---- Render (unchanged) ----
+  // ---- Render ----
   return (
     <div
       className="chord-app-container"
