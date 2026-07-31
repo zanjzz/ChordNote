@@ -115,19 +115,24 @@ const SAMPLE_CHARTS = [
   },
 ];
 
-export default function LandingPage({ onOpenEditor }) {
-  // State for navbar scroll effect
-  const [scrolled, setScrolled] = useState(false);
+// -------- HELPER: convert hex to RGB string (comma separated) --------
+const hexToRgb = (hex) => {
+  const clean = hex.replace("#", "");
+  const bigint = parseInt(clean, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `${r}, ${g}, ${b}`;
+};
 
-  // State for mobile menu
+export default function LandingPage({ onOpenEditor }) {
+  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
   const scrollTimeout = useRef(null);
-
-  // Ref for the hero container (used by VariableProximity)
   const heroContainerRef = useRef(null);
 
-  // Dark mode state with localStorage persistence
+  // Dark mode state
   const [darkMode, setDarkMode] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -136,12 +141,14 @@ export default function LandingPage({ onOpenEditor }) {
     return false;
   });
 
-  // Theme selection based on dark mode
   const theme = darkMode ? DARK_THEME : LIGHT_THEME;
   const primaryColor = darkMode ? "#12D8C8" : "#063564";
   const primaryHover = darkMode ? "#0fbdb0" : "#052a4f";
 
-  // Aurora background settings - different colors for light/dark mode
+  // Compute RGB version of the panel color for use in rgba()
+  const panelRgb = useMemo(() => hexToRgb(theme.panel), [theme.panel]);
+
+  // Aurora settings
   const auroraSettings = useMemo(
     () => ({
       colorStops: darkMode
@@ -155,7 +162,6 @@ export default function LandingPage({ onOpenEditor }) {
     [darkMode],
   );
 
-  // Toggle dark mode and persist to localStorage
   const toggleDarkMode = useCallback(() => {
     setDarkMode((prev) => {
       const next = !prev;
@@ -171,7 +177,7 @@ export default function LandingPage({ onOpenEditor }) {
     });
   }, []);
 
-  // Optimized scroll handler with requestAnimationFrame throttling
+  // Scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (scrollTimeout.current) {
@@ -188,7 +194,7 @@ export default function LandingPage({ onOpenEditor }) {
     };
   }, []);
 
-  // Close mobile menu when clicking outside
+  // Close mobile menu on outside click
   useEffect(() => {
     if (!menuOpen) return;
     const handleClickOutside = (e) => {
@@ -200,11 +206,12 @@ export default function LandingPage({ onOpenEditor }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
-  // CSS variables for theming
+  // CSS variables – includes --lp-panel-rgb for dynamic rgba backgrounds
   const cssVars = useMemo(
     () => ({
       "--lp-page": theme.page,
       "--lp-panel": theme.panel,
+      "--lp-panel-rgb": panelRgb,
       "--lp-border": theme.border,
       "--lp-border-soft": theme.borderSoft,
       "--lp-text": theme.text,
@@ -214,10 +221,10 @@ export default function LandingPage({ onOpenEditor }) {
       "--lp-primary-hover": primaryHover,
       "--lp-primary-text": darkMode ? "#1a1a1a" : "#ffffff",
     }),
-    [theme, primaryColor, primaryHover, darkMode],
+    [theme, primaryColor, primaryHover, darkMode, panelRgb],
   );
 
-  // Style for mobile menu items
+  // Mobile menu item style
   const menuItemStyle = {
     display: "flex",
     alignItems: "center",
@@ -236,7 +243,6 @@ export default function LandingPage({ onOpenEditor }) {
     boxSizing: "border-box",
   };
 
-  // Wrapper for onOpenEditor to ensure scroll reset
   const handleOpenEditor = () => {
     window.scrollTo({ top: 0, behavior: "instant" });
     onOpenEditor();
@@ -279,7 +285,7 @@ export default function LandingPage({ onOpenEditor }) {
               width: "100%",
             }}
           >
-            {/* Logo - left side */}
+            {/* Logo */}
             <div className="lp-nav-left">
               <img
                 src={darkMode ? darkLogo : whiteLogo}
@@ -288,7 +294,6 @@ export default function LandingPage({ onOpenEditor }) {
               />
             </div>
 
-            {/* Right side: actions, links, dark mode, mobile menu */}
             <div className="lp-nav-right">
               <button
                 onClick={handleOpenEditor}
@@ -343,7 +348,6 @@ export default function LandingPage({ onOpenEditor }) {
                       </svg>
                       Open Editor
                     </button>
-                    {/* ✅ FIXED: Missing <a> tag added here */}
                     <a
                       href="#features"
                       style={menuItemStyle}
@@ -389,33 +393,30 @@ export default function LandingPage({ onOpenEditor }) {
         <section className="lp-hero">
           <div className="lp-hero-grid">
             <div className="lp-hero-content" ref={heroContainerRef}>
-              {/* Hero heading with VariableProximity effect */}
               <div className="hero-heading">
                 <VariableProximity
                   label="ChordNote -"
                   className="hero-variable-proximity"
-                  fromFontVariationSettings="'wght' 400, 'opsz' 9"
-                  toFontVariationSettings="'wght' 1000, 'opsz' 40"
+                  fromFontVariationSettings="'wght' 700, 'opsz' 9"
+                  toFontVariationSettings="'wght' 300, 'opsz' 40"
                   containerRef={heroContainerRef}
                   radius={150}
-                  falloff="linear"
+                  falloff="gaussian"
                 />
                 <VariableProximity
                   label="The Ultimate Lyrics & Chord Sheet Editor"
                   className="hero-variable-proximity"
-                  fromFontVariationSettings="'wght' 400, 'opsz' 9"
-                  toFontVariationSettings="'wght' 1000, 'opsz' 40"
+                  fromFontVariationSettings="'wght' 700, 'opsz' 9"
+                  toFontVariationSettings="'wght' 300, 'opsz' 40"
                   containerRef={heroContainerRef}
                   radius={150}
-                  falloff="linear"
+                  falloff="gaussian"
                 />
               </div>
-
               <p>
                 Everything you need to create, edit, transpose, print, and share
                 chord sheets. Fast, simple, and free.
               </p>
-
               <div className="lp-hero-actions">
                 <button
                   onClick={handleOpenEditor}
@@ -433,7 +434,6 @@ export default function LandingPage({ onOpenEditor }) {
                     <path d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </button>
-                {/* ✅ FIXED: Missing <a> tag added here */}
                 <a
                   href="#features"
                   className="lp-btn lp-btn-secondary lp-btn-lg"
@@ -463,7 +463,6 @@ export default function LandingPage({ onOpenEditor }) {
                         <div className="lp-sheet-lyric">{row.lyric}</div>
                       </div>
                     ))}
-                    {/* Animated cursor - front card only, purely decorative */}
                     {i === 2 && (
                       <div className="lp-cursor" aria-hidden="true">
                         <span className="lp-cursor-ring" />

@@ -49,7 +49,8 @@ html {
 
 .landing-page .lp-navbar.scrolled {
   border-bottom-color: var(--lp-border);
-  background: color-mix(in srgb, var(--lp-page) 75%, transparent);
+  /* Dynamic background using theme's panel RGB */
+  background: rgba(var(--lp-panel-rgb), 0.75);
   backdrop-filter: blur(16px) saturate(1.2);
   -webkit-backdrop-filter: blur(16px) saturate(1.2);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -132,7 +133,7 @@ html {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: color-mix(in srgb, var(--lp-panel) 97%, transparent);
+  background: rgba(var(--lp-panel-rgb), 0.97);
   backdrop-filter: blur(24px) saturate(1.8);
   -webkit-backdrop-filter: blur(24px) saturate(1.8);
   border: 1px solid var(--lp-border);
@@ -157,8 +158,14 @@ html {
 }
 
 @keyframes lpSlideUp {
-  from { opacity: 0; transform: translateY(8px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* ============================================
@@ -272,7 +279,7 @@ html {
   min-height: 480px;
 }
 
-/* Hero heading with VariableProximity */
+/* Hero heading container */
 .hero-heading {
   display: flex;
   flex-direction: column;
@@ -282,6 +289,8 @@ html {
   overflow-wrap: break-word;
 }
 
+/* ─── Variable‑proximity hero titles ─── */
+
 .hero-variable-proximity {
   font-size: clamp(2.6rem, 5.2vw, 3.8rem);
   font-weight: 700;
@@ -290,6 +299,9 @@ html {
   color: var(--lp-text);
   padding-right: 0.4em;
   max-width: 100%;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  transition: font-variation-settings 0.15s ease;
 }
 
 /* ============================================
@@ -353,7 +365,7 @@ html {
   z-index: 3;
 }
 
-/* Lift effect on hover — premium, interactive, and earned */
+/* Lift effect on hover */
 .landing-page .lp-sheet-card:hover {
   transform: rotate(var(--rot)) translateY(-10px);
   box-shadow: 0 28px 65px -16px rgba(0, 0, 0, 0.38);
@@ -374,7 +386,6 @@ html {
   color: var(--lp-text);
 }
 
-/* Contrast-optimized key label: adapts to light/dark mode */
 .landing-page .lp-sheet-key {
   font-size: 0.82rem;
   background: color-mix(
@@ -397,7 +408,6 @@ html {
   margin-bottom: 0;
 }
 
-/* Contrast-optimized chord text: blends accent with text for readability */
 .landing-page .lp-sheet-chords {
   font-size: 1rem;
   font-weight: 600;
@@ -437,7 +447,7 @@ html {
 
 .landing-page .lp-cursor-ring {
   position: absolute;
-top: -11px;
+  top: -11px;
   left: -10px;
   width: 26px;
   height: 26px;
@@ -448,26 +458,91 @@ top: -11px;
 }
 
 @keyframes lpCursorMove {
-  0%   { left: 20%; top: 55%; opacity: 0; }
-  6%   { left: 20%; top: 55%; opacity: 1; }
-  20%  { left: 20%; top: 55%; opacity: 1; }
-  30%  { left: 46%; top: 55%; opacity: 1; }
-  44%  { left: 46%; top: 55%; opacity: 1; }
-  54%  { left: 66%; top: 55%; opacity: 1; }
-  68%  { left: 66%; top: 55%; opacity: 1; }
-  80%  { left: 32%; top: 80%; opacity: 1; }
-  92%  { left: 32%; top: 80%; opacity: 0; }
-  100% { left: 20%; top: 55%; opacity: 0; }
+  0% {
+    left: 20%;
+    top: 55%;
+    opacity: 0;
+  }
+  6% {
+    left: 20%;
+    top: 55%;
+    opacity: 1;
+  }
+  20% {
+    left: 20%;
+    top: 55%;
+    opacity: 1;
+  }
+  30% {
+    left: 46%;
+    top: 55%;
+    opacity: 1;
+  }
+  44% {
+    left: 46%;
+    top: 55%;
+    opacity: 1;
+  }
+  54% {
+    left: 66%;
+    top: 55%;
+    opacity: 1;
+  }
+  68% {
+    left: 66%;
+    top: 55%;
+    opacity: 1;
+  }
+  80% {
+    left: 32%;
+    top: 80%;
+    opacity: 1;
+  }
+  92% {
+    left: 32%;
+    top: 80%;
+    opacity: 0;
+  }
+  100% {
+    left: 20%;
+    top: 55%;
+    opacity: 0;
+  }
 }
 
 @keyframes lpCursorClick {
-  0%, 16%  { opacity: 0; transform: scale(0.4); }
-  20%      { opacity: 0.4; transform: scale(1); }
-  26%, 40% { opacity: 0; transform: scale(0.4); }
-  44%      { opacity: 0.4; transform: scale(1); }
-  50%, 64% { opacity: 0; transform: scale(0.4); }
-  68%      { opacity: 0.4; transform: scale(1); }
-  74%, 100% { opacity: 0; transform: scale(0.4); }
+  0%,
+  16% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  20% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  26%,
+  40% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  44% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50%,
+  64% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  68% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  74%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
 }
 
 /* ============================================
@@ -536,7 +611,6 @@ top: -11px;
   margin-bottom: 10px;
 }
 
-/* Contrast-optimized feature icons */
 .landing-page .lp-feature-icon {
   display: inline-flex;
   align-items: center;
@@ -629,6 +703,11 @@ top: -11px;
    RESPONSIVE - TABLET
    ============================================ */
 @media (max-width: 1024px) {
+  .landing-page .lp-hero {
+    padding-left: 60px;
+    padding-right: 40px;
+  }
+
   .landing-page .lp-sheet-stack {
     width: 400px;
     height: 400px;
@@ -659,8 +738,8 @@ top: -11px;
    ============================================ */
 @media (max-width: 768px) {
   .landing-page .lp-nav-links,
-  .landing-page .lp-nav-right > .lp-icon-btn:not(.lp-mobile-menu .lp-icon-btn),
-  .landing-page .lp-nav-right > .lp-btn {
+  .landing-page .lp-nav-right>.lp-icon-btn:not(.lp-mobile-menu .lp-icon-btn),
+  .landing-page .lp-nav-right>.lp-btn {
     display: none;
   }
   .landing-page .lp-mobile-menu {
@@ -682,9 +761,16 @@ top: -11px;
   .landing-page .hero-heading {
     margin-bottom: 16px;
   }
-  .landing-page .hero-variable-proximity {
+
+  /* Mobile: text wraps naturally to fit the viewport.
+     No hover override → stays consistent on hover. */
+  .hero-variable-proximity {
     font-size: clamp(2.1rem, 7vw, 2.8rem);
+    white-space: normal;
+    word-break: break-word;
+    display: block;
   }
+
   .landing-page .lp-hero p {
     font-size: 1.02rem;
     max-width: 85%;
@@ -713,7 +799,7 @@ top: -11px;
     padding: 96px 16px 44px;
   }
 
-  .landing-page .hero-variable-proximity {
+  .hero-variable-proximity {
     font-size: clamp(1.85rem, 8.5vw, 2.3rem);
   }
   .landing-page .lp-hero p {
@@ -752,4 +838,3 @@ top: -11px;
     font-size: 0.95rem;
   }
 }
-

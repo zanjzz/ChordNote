@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, useRef, useEffect } from "react";
+import { forwardRef, useMemo, useRef, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
 import "./VariableProximity.css";
 
@@ -58,10 +58,21 @@ const VariableProximity = forwardRef((props, ref) => {
     ...restProps
   } = props;
 
+  const rootRef = useRef(null);
   const letterRefs = useRef([]);
   const interpolatedSettingsRef = useRef([]);
   const mousePositionRef = useMousePositionRef(containerRef);
   const lastPositionRef = useRef({ x: null, y: null });
+
+  // Forward the ref to the consumer while still keeping our own internal handle
+  const setRootRef = useCallback(
+    (el) => {
+      rootRef.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
 
   const parsedSettings = useMemo(() => {
     const parseSettings = (settingsStr) =>
@@ -100,6 +111,63 @@ const VariableProximity = forwardRef((props, ref) => {
         return norm;
     }
   };
+
+  // Lock each letter's layout box to its width at rest (fromFontVariationSettings).
+  // This means the font-variation animation can still change how wide the glyph
+  // *looks* on hover, but it can never change how much space it *occupies* in
+  // the layout — so hovering can no longer trigger a reflow/wrap.
+  const lockWidths = useCallback(() => {
+    letterRefs.current.forEach((el) => {
+      if (!el) return;
+      el.style.fontVariationSettings = fromFontVariationSettings;
+      el.style.width = "auto";
+    });
+
+    // Force a layout flush so the widths we read next are accurate
+    if (rootRef.current) {
+      // eslint-disable-next-line no-unused-expressions
+      rootRef.current.getBoundingClientRect();
+    }
+
+    letterRefs.current.forEach((el) => {
+      if (!el) return;
+      const w = el.getBoundingClientRect().width;
+      el.style.width = `${w}px`;
+    });
+  }, [fromFontVariationSettings]);
+
+  // Re-lock once the actual font file has loaded (initial mount can happen
+  // before Roboto Flex is ready, which would measure fallback-font widths)
+  useEffect(() => {
+    let cancelled = false;
+    if (document?.fonts?.ready) {
+      document.fonts.ready.then(() => {
+        if (!cancelled) lockWidths();
+      });
+    } else {
+      lockWidths();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [lockWidths, label]);
+
+  // Re-lock on viewport changes, since the hero heading's font-size is
+  // driven by clamp(...vw...) and will resize independent of container width
+  useEffect(() => {
+    let frame;
+    const handleResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(lockWidths);
+    };
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleResize);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleResize);
+    };
+  }, [lockWidths]);
 
   useAnimationFrame(() => {
     if (!containerRef?.current) return;
@@ -148,10 +216,10 @@ const VariableProximity = forwardRef((props, ref) => {
 
   return (
     <span
-      ref={ref}
+      ref={setRootRef}
       className={`${className} variable-proximity`}
       onClick={onClick}
-      style={{ display: "inline-block", whiteSpace: "normal", ...style }}
+      style={{ ...style }}
       {...restProps}
     >
       {words.map((word, wordIndex) => (
