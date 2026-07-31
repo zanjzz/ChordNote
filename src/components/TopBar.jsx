@@ -181,22 +181,6 @@ export default function TopBar({
           >
             <button
               onClick={() => {
-                onGoHome();
-                setMenuOpen(false);
-              }}
-              style={menuItemStyle}
-              onMouseEnter={hoverIn}
-              onMouseLeave={hoverOutTransparent}
-            >
-              <img
-                src={darkMode ? darkLogo : whiteLogo}
-                alt=""
-                style={{ width: "16px", height: "16px", objectFit: "contain" }}
-              />
-              Home
-            </button>
-            <button
-              onClick={() => {
                 onSave();
                 setMenuOpen(false);
               }}
