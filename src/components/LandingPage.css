@@ -49,10 +49,9 @@ html {
 
 .landing-page .lp-navbar.scrolled {
   border-bottom-color: var(--lp-border);
-  /* Dynamic background using theme's panel RGB */
   background: rgba(var(--lp-panel-rgb), 0.75);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.2) !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -290,7 +289,7 @@ html {
 }
 
 /* ─── Variable‑proximity hero titles ─── */
-
+/* No hover white-space override → text stays in place */
 .hero-variable-proximity {
   font-size: clamp(2.6rem, 5.2vw, 3.8rem);
   font-weight: 700;
