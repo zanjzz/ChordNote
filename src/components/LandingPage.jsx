@@ -275,7 +275,20 @@ export default function LandingPage({ onOpenEditor }) {
       {/* Content */}
       <div style={{ position: "relative", zIndex: 1 }}>
         {/* Navigation */}
-        <nav className={`lp-navbar ${scrolled ? "scrolled" : ""}`}>
+        <nav
+          className={`lp-navbar ${scrolled ? "scrolled" : ""}`}
+          style={{
+            transition:
+              "background 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease",
+            ...(scrolled && {
+              backdropFilter: "blur(16px) saturate(1.2)",
+              WebkitBackdropFilter: "blur(16px) saturate(1.2)",
+              background: `rgba(${panelRgb}, 0.75)`,
+              borderBottom: `1px solid ${theme.border}`,
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+            }),
+          }}
+        >
           <div
             className="lp-navbar-inner"
             style={{
