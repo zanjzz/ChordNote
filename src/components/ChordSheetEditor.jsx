@@ -45,7 +45,6 @@ import ChordsPanel from "./ChordsPanel.jsx";
 import PreviewModal from "./PreviewModal/PreviewModal.jsx";
 import ChordImporter from "./ChordImporter.jsx";
 import SavedSongsModal from "./SavedSongsModal.jsx";
-import InfoSection from "./InfoSection.jsx";
 import SupportBanner from "./SupportBanner.jsx";
 import Footer from "./Footer.jsx";
 
@@ -69,7 +68,7 @@ const readSavedSongsFromStorage = () => {
 // ============================================================
 // MAIN COMPONENT
 // ============================================================
-export default function ChordSheetEditor() {
+export default function ChordSheetEditor({ onGoHome }) {
   // ---- Load initial state ----
   const loadInitialState = () => {
     const params = new URLSearchParams(window.location.search);
@@ -334,6 +333,22 @@ export default function ChordSheetEditor() {
     };
   }, [milestoneToast.visible, milestoneToast.isLimit, milestoneToast.count]);
 
+  // ---- Strip "data" from the URL once shared content has been loaded ----
+  // Keeps the payload out of browser history/refreshes after the initial
+  // load, without touching the "editor" param App.jsx manages separately.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has("data")) {
+      params.delete("data");
+      const newSearch = params.toString();
+      const newUrl =
+        window.location.pathname +
+        (newSearch ? `?${newSearch}` : "") +
+        window.location.hash;
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, []);
+
   const closeMilestoneToast = () => {
     if (!milestoneCloseUnlocked) return;
     setMilestoneToast({ visible: false, count: 0, isLimit: false });
@@ -371,9 +386,9 @@ export default function ChordSheetEditor() {
     setTransposeOffset((prev) => prev + steps);
   };
 
-   const handleKeyChange = (newKey) => {
-     setMusicKey(newKey);
-     setTransposeOffset(0);
+  const handleKeyChange = (newKey) => {
+    setMusicKey(newKey);
+    setTransposeOffset(0);
     // Nudge the toggle to match what the user just typed — e.g. typing
     // "Bb" switches to flat, "A#" switches to sharp. This only sets a
     // default; the toggle remains fully user-controlled afterward.
@@ -384,9 +399,9 @@ export default function ChordSheetEditor() {
         setAccidentalPreference("sharp");
       }
     }
-   };
-  
-    // Re-spells every existing chord and the Key field immediately when the
+  };
+
+  // Re-spells every existing chord and the Key field immediately when the
   // user flips the sharp/flat toggle — steps=0 means the actual pitches
   // never change, only which name (e.g. D# vs Eb) is used to display them.
   const handleAccidentalPreferenceChange = (newPreference) => {
@@ -816,6 +831,7 @@ export default function ChordSheetEditor() {
           onViewSaved={() => setShowSavedSongs(true)}
           savedCount={savedSongs.length}
           onClear={() => setShowClearConfirm(true)}
+          onGoHome={onGoHome}
         />
 
         <div className="chord-meta-grid">
@@ -1285,7 +1301,6 @@ export default function ChordSheetEditor() {
         onClose={closeMilestoneToast}
       />
 
-      <InfoSection theme={theme} chordColor={chordColor} />
       <SupportBanner theme={theme} darkMode={darkMode} />
       <Footer theme={theme} darkMode={darkMode} chordColor={chordColor} />
     </div>

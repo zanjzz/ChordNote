@@ -60,19 +60,28 @@ export default function Footer({ theme, darkMode, chordColor }) {
         </a>
       </div>
 
+      {/*
+        Accessibility fix: Changed color from theme.textMuted to theme.textSecondary
+        to ensure 4.5:1 contrast ratio for 12px text (WCAG AA).
+        Heart icon now matches text color for better visibility.
+      */}
       <div
         style={{
           fontSize: "12px",
-          color: theme.textMuted,
+          color: theme.textSecondary,
           display: "flex",
           alignItems: "center",
           gap: "4px",
         }}
       >
         Made with{" "}
-        <Heart size={12} fill={theme.textMuted} color={theme.textMuted} /> for
-        musicians
+        <Heart
+          size={12}
+          fill={theme.textSecondary}
+          color={theme.textSecondary}
+        />{" "}
+        for musicians
       </div>
     </footer>
   );
-}
+}                            

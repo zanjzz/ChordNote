@@ -12,7 +12,8 @@ export default function TopBar({
   onSave,
   onViewSaved,
   savedCount,
-  onClear, // 👈 New prop
+  onClear,
+  onGoHome,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -66,12 +67,18 @@ export default function TopBar({
 
   return (
     <div className="chord-top-bar">
-      <div
+      <button
+        onClick={onGoHome}
+        title="Back to home"
         style={{
           display: "flex",
           alignItems: "center",
           gap: "10px",
           minWidth: 0,
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
         }}
       >
         <img
@@ -79,7 +86,7 @@ export default function TopBar({
           alt="Chordnote logo"
           style={{ width: "110px", height: "auto", display: "block" }}
         />
-      </div>
+      </button>
 
       {/* Desktop button row */}
       <div
@@ -172,6 +179,22 @@ export default function TopBar({
               animation: "slideUp 0.18s ease",
             }}
           >
+            <button
+              onClick={() => {
+                onGoHome();
+                setMenuOpen(false);
+              }}
+              style={menuItemStyle}
+              onMouseEnter={hoverIn}
+              onMouseLeave={hoverOutTransparent}
+            >
+              <img
+                src={darkMode ? darkLogo : whiteLogo}
+                alt=""
+                style={{ width: "16px", height: "16px", objectFit: "contain" }}
+              />
+              Home
+            </button>
             <button
               onClick={() => {
                 onSave();
