@@ -87,11 +87,10 @@ export default function ChordsPanel({
   const isNashvilleMode = chordDisplayMode !== "letters";
   const noKey = !musicKey || musicKey.trim() === "";
 
-  // 👇 Detect light mode to set appropriate text-shadow for chords
   const isLightTheme = theme.page === "#F5F5F5";
   const chordTextShadow = isLightTheme
     ? "0 0 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.6), 0 0 8px rgba(255,255,255,0.3)"
-    : "0 0 2px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.3)";
+    : 'none';
 
   return (
     <div
@@ -283,7 +282,6 @@ export default function ChordsPanel({
                       transition: "background 0.15s ease",
                       overflowX: "hidden",
                       boxSizing: "border-box",
-                      // 👇 IMPORTANT FIX: guarantees readability regardless of chordColor
                       textShadow: chordTextShadow,
                     }}
                   />
