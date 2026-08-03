@@ -12,17 +12,14 @@ export default function LyricsPanel({
   addSection,
   chordColor,
   showLineNumbers,
-  inModal = false, // false on the main page (default), true inside the fullscreen overlay
-  onToggleFullscreen, // opens fullscreen from the main page, closes it from inside the overlay
+  inModal = false, 
+  onToggleFullscreen, 
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [hoveredSection, setHoveredSection] = useState(null);
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
-  // Untouched — still drives the main-page height exactly as before.
-  // Inside the fullscreen overlay the textarea is pinned to height: 100%
-  // instead, so this hook's value simply goes unused there.
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
 
   const pendingScrollRef = useRef(false);
@@ -129,9 +126,6 @@ export default function LyricsPanel({
               boxSizing: "border-box",
               pointerEvents: "none",
               borderRight: `1px solid ${theme.borderSoft}`,
-              // Main page: only the top-left corner is rounded (the handle
-              // below owns the bottom rounding). In the overlay there's no
-              // handle below it, so both left corners round out.
               borderRadius: inModal ? "10px 0 0 10px" : "10px 0 0 0",
             }}
           >
@@ -168,9 +162,6 @@ export default function LyricsPanel({
             display: "block",
             background: theme.panel,
             border: `1px solid ${theme.border}`,
-            // Main page: bottom border lives on the drag handle below it.
-            // In the overlay there's no handle, so the textarea owns all 4
-            // sides of its own border.
             borderBottom: inModal ? `1px solid ${theme.border}` : "none",
             borderRadius: inModal ? "10px" : "10px 10px 0 0",
             padding: "16px",
@@ -181,18 +172,11 @@ export default function LyricsPanel({
             boxSizing: "border-box",
             outline: "none",
             transition: "padding-left 0.15s ease",
-            // <textarea> defaults to the browser's native `resize: both`
-            // unless explicitly overridden — this keeps the custom drag
-            // handle below as the only way to resize on the main page,
-            // and disables resize entirely in the fullscreen overlay.
             resize: "none",
           }}
         />
       </div>
 
-      {/* Drag handle only makes sense on the main page — inside the
-          fullscreen overlay the panel is pinned to 100% of the overlay's
-          height and resize is disabled entirely. */}
       {!inModal && (
         <div
           onMouseDown={startDragging}
