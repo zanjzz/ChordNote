@@ -90,7 +90,10 @@ export default function ChordsPanel({
   const isLightTheme = theme.page === "#F5F5F5";
   const chordTextShadow = isLightTheme
     ? "0 0 2px rgba(255,255,255,0.9), 0 0 4px rgba(255,255,255,0.6), 0 0 8px rgba(255,255,255,0.3)"
-    : 'none';
+    : "none";
+
+  const lyricsFontFamily =
+    "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif";
 
   return (
     <div
@@ -174,7 +177,14 @@ export default function ChordsPanel({
         }}
       >
         {lines.length === 0 || (lines.length === 1 && lines[0] === "") ? (
-          <p style={{ color: theme.textMuted, fontSize: "14px", margin: 0 }}>
+          <p
+            style={{
+              color: theme.textMuted,
+              fontSize: "14px",
+              margin: 0,
+              fontFamily: lyricsFontFamily,
+            }}
+          >
             Your lyrics will show up here — add chords above each line.
           </p>
         ) : (
