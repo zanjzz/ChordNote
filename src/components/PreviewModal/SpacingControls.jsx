@@ -70,9 +70,6 @@ export default function SpacingControls({
     </div>
   );
 
-  // Same "scale row" this used to be in TypographyControls — relocated
-  // here since it's spacing, not typography. Handles the undefined
-  // default (1.0) the same way the original did.
   const renderScaleSlider = (
     label,
     value,
@@ -127,6 +124,7 @@ export default function SpacingControls({
         Spacing
       </SectionHeader>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {renderSlider("Padding", paddingSize, setPaddingSize, 5, 80, 250, 0)}
         {renderScaleSlider(
           "Meta / Lyrics gap",
           metaLyricsGap,
@@ -135,12 +133,7 @@ export default function SpacingControls({
           2.0,
           0.1,
         )}
-        {/*
-          👇 Same min/max/default values as before (untouched, per request)
-          — only the step size and displayed precision changed, so the
-          +/- buttons move in finer increments instead of jumping by a
-          full 0.1 (or 10px for padding) each click.
-        */}
+    
         {renderSlider(
           "Line height",
           lineHeight,
@@ -159,7 +152,6 @@ export default function SpacingControls({
           3.0,
           2,
         )}
-        {renderSlider("Padding", paddingSize, setPaddingSize, 5, 80, 250, 0)}
         {renderSlider(
           "Block spacing",
           blockSpacing,

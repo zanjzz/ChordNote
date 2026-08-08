@@ -1,7 +1,10 @@
-/* Fonts & base reset. This is the only stylesheet defining these —
-   stop importing the old duplicate copy, or load order will decide
-   which set of rules actually wins. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+/* ============================================================
+   FONTS & BASE RESET
+   ============================================================ */
+
+/* Inter for UI, JetBrains Mono for chords,
+   Plus Jakarta Sans for lyrics (round, clean, professional) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 
 :root {
   --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -18,22 +21,37 @@ body {
   padding: 0;
 }
 
-/* Monospace fields: chord input and the lyric line beneath it. */
+/* ============================================================
+   TYPOGRAPHY – Chords vs Lyrics
+   ============================================================ */
+
+/* Chord input stays monospace for perfect alignment */
 .chord-input,
-.chord-lyrics-textarea,
 .mono {
   font-family: var(--font-mono) !important;
 }
 
-/* Chord Sheet Editor layout */
+/* Lyrics text – rounder, slightly thinner, premium feel.
+   Plus Jakarta Sans gives that clean, modern SaaS look. */
+.chord-lyrics-textarea {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+}
+
+/* ============================================================
+   CHORD SHEET EDITOR – LAYOUT
+   ============================================================ */
+
 .chord-app-container {
   min-height: 100vh;
   padding: 24px;
-  max-width: 1440px; /* caps line length on ultrawide screens */
+  max-width: 1440px;
   margin: 0 auto;
   transition: background 0.15s ease, color 0.15s ease;
 }
 
+/* ---- Top Bar ---- */
 .chord-top-bar {
   display: flex;
   align-items: center;
@@ -42,30 +60,12 @@ body {
   gap: 12px;
 }
 
+/* ---- Meta Input Grid (Title, Author, BPM, Key, Capo) ---- */
 .chord-meta-grid {
   display: grid;
   grid-template-columns: 2fr 1.3fr 0.6fr 0.6fr 0.6fr;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.chord-controls-wrap {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-}
-
-.chord-editor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.chord-panel {
-  border-radius: 10px;
-  padding: 16px;
 }
 
 .chord-meta-input {
@@ -77,8 +77,28 @@ body {
   box-sizing: border-box;
 }
 
-/* Top bar: desktop button row vs. mobile hamburger menu, swapped by
-   breakpoint below. !important overrides TopBar's inline display style. */
+/* ---- Controls Row (transpose, font size, toggles) ---- */
+.chord-controls-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* ---- Two-column editor (Lyrics | Chords) ---- */
+.chord-editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.chord-panel {
+  border-radius: 10px;
+  padding: 16px;
+}
+
+/* ---- Top Bar Mobile Menu Toggle ---- */
 .chord-topbar-actions-mobile {
   display: none;
 }
@@ -92,7 +112,10 @@ body {
   }
 }
 
-/* Import + Preview modal overlays — same layout, different tint/depth. */
+/* ============================================================
+   MODALS – Import & Preview
+   ============================================================ */
+
 .chord-importer-overlay,
 .chord-preview-overlay {
   position: fixed;
@@ -113,7 +136,6 @@ body {
   z-index: 50;
 }
 
-/* Import + Preview modal boxes — same shape, different size/shadow. */
 .chord-importer-modal,
 .chord-preview-inner {
   border-radius: 14px;
@@ -157,7 +179,10 @@ body {
   gap: 10px;
 }
 
-/* Buttons */
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
 .chord-btn-step {
   display: flex;
   align-items: center;
@@ -168,10 +193,7 @@ body {
   cursor: pointer;
 }
 
-/* Bottom action bar (Import/Copy/Share/Preview). Grid, not flex —
-   flex's equal-width sizing drifted uneven once one button (Copy) had
-   more internal elements than the others. Grid columns stay equal
-   regardless of content. */
+/* ---- Bottom Action Bar (Import, Copy, Share, Preview) ---- */
 .chord-action-bar {
   margin-left: auto;
   width: 45%;
@@ -191,7 +213,7 @@ body {
   transform: scale(0.97);
 }
 
-/* Copy dropdown open animation */
+/* ---- Copy Dropdown ---- */
 @keyframes chordCopyMenuIn {
   from {
     opacity: 0;
@@ -208,7 +230,10 @@ body {
   transform-origin: bottom right;
 }
 
-/* Responsive adjustments */
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
 @media (max-width: 768px) {
   .chord-app-container {
     padding: 18px !important;
@@ -218,30 +243,24 @@ body {
     width: 100% !important;
     min-width: 0 !important;
     margin-left: 0 !important;
-    /* 2x2 instead of a forced 4-across row, which collapsed buttons
-       into unreadable slivers on phones. */
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
 
   .chord-editor-grid {
     grid-template-columns: 1fr !important;
-    gap: 28px !important; /* desktop's 16px was too tight stacked vertically */
+    gap: 28px !important;
   }
 
-  /* Breathing room under the "Lyrics" / "Chords" labels on mobile.
-     Targets the first child span of each grid cell since the labels
-     themselves aren't classed. */
   .chord-editor-grid > div > span:first-child {
     margin-bottom: 4px;
   }
 
-  /* Title/Author each keep a full row; BPM/Key/Capo share one row
-     instead of stacking into 5 separate rows. */
   .chord-meta-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 10px !important;
   }
+
   .chord-meta-grid > div:nth-child(1),
   .chord-meta-grid > div:nth-child(2) {
     grid-column: span 2;
@@ -251,19 +270,23 @@ body {
     flex-wrap: nowrap !important;
     gap: 12px !important;
   }
+
   .chord-controls-wrap {
     flex-wrap: wrap !important;
     gap: 8px !important;
   }
+
   .chord-importer-overlay,
   .chord-preview-overlay {
     padding: 12px !important;
   }
+
   .chord-importer-modal,
   .chord-preview-inner {
     max-width: 100% !important;
     border-radius: 10px !important;
   }
+
   .chord-preview-toolbar {
     flex-wrap: wrap !important;
     gap: 8px !important;
@@ -271,8 +294,6 @@ body {
 }
 
 @media (max-width: 480px) {
-  /* Every field gets its own full-width row at this size — three
-     across (BPM/Key/Capo) gets too cramped to tap accurately. */
   .chord-meta-grid {
     grid-template-columns: 1fr !important;
   }
@@ -287,15 +308,20 @@ body {
   }
 }
 
-/* Print: show only the sheet content, nothing else on the page. */
+/* ============================================================
+   PRINT – Show only the sheet content
+   ============================================================ */
+
 @media print {
   body * {
     visibility: hidden;
   }
+
   .chord-print-content,
   .chord-print-content * {
     visibility: visible;
   }
+
   .chord-print-content {
     position: static !important;
     left: 0 !important;

@@ -107,7 +107,7 @@ export default function ControlsBar({
             color: theme.textSecondary,
           }}
         >
-          Size
+         Font Size
         </span>
         <StepBtn
           className="chord-btn-step"
