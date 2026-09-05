@@ -257,14 +257,17 @@ body {
   }
 
   .chord-meta-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 10px !important;
   }
 
+  /* Title and Author each take a full row */
   .chord-meta-grid > div:nth-child(1),
   .chord-meta-grid > div:nth-child(2) {
-    grid-column: span 2;
+    grid-column: span 3;
   }
+
+  /* BPM, Key, Capo fall into the next row, one per column */
 
   .chord-top-bar {
     flex-wrap: nowrap !important;
@@ -295,7 +298,7 @@ body {
 
 @media (max-width: 480px) {
   .chord-meta-grid {
-    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
   .chord-action-bar > button {

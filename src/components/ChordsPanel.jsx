@@ -5,6 +5,8 @@ import { isSectionLabel, labelText } from "../utils/sectionHelpers";
 import { normalizeChordLine } from "../utils/chordTranspose";
 import { convertChordLine } from "../utils/nashvilleNumbers";
 import { useResizableHeight } from "../hooks/useResizableHeight.js";
+import { useAutoScroll } from "../hooks/useAutoScroll.js";
+import AutoplayControl from "./AutoplayControl.jsx";
 
 export default function ChordsPanel({
   lines,
@@ -23,6 +25,9 @@ export default function ChordsPanel({
   const [focusedIndex, setFocusedIndex] = useState(null);
   const inputRefs = useRef({});
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
+
+  const scrollRef = useRef(null);
+  const autoplay = useAutoScroll(scrollRef, { active: inModal });
 
   const setInputRef = (index) => (el) => {
     if (el) {
@@ -137,30 +142,47 @@ export default function ChordsPanel({
             </span>
           )}
         </span>
-        {onToggleFullscreen && (
-          <button
-            onClick={onToggleFullscreen}
-            title={inModal ? "Exit fullscreen" : "Expand"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "26px",
-              height: "26px",
-              flexShrink: 0,
-              borderRadius: "6px",
-              border: `1px solid ${theme.border}`,
-              background: theme.panel,
-              color: theme.textSecondary,
-              cursor: "pointer",
-            }}
-          >
-            {inModal ? <X size={13} /> : <Maximize2 size={13} />}
-          </button>
-        )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {inModal && (
+            <AutoplayControl
+              theme={theme}
+              chordColor={chordColor}
+              isPlaying={autoplay.isPlaying}
+              onToggle={autoplay.toggle}
+              speedLabel={autoplay.speedLabel}
+              onIncreaseSpeed={autoplay.increaseSpeed}
+              onDecreaseSpeed={autoplay.decreaseSpeed}
+              canIncrease={autoplay.canIncrease}
+              canDecrease={autoplay.canDecrease}
+            />
+          )}
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              title={inModal ? "Exit fullscreen" : "Expand"}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "26px",
+                height: "26px",
+                flexShrink: 0,
+                borderRadius: "6px",
+                border: `1px solid ${theme.border}`,
+                background: theme.panel,
+                color: theme.textSecondary,
+                cursor: "pointer",
+              }}
+            >
+              {inModal ? <X size={13} /> : <Maximize2 size={13} />}
+            </button>
+          )}
+        </div>
       </div>
 
       <div
+        ref={scrollRef}
         className="chord-panel"
         style={{
           background: theme.panel,

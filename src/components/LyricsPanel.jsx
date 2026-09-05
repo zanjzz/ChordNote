@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { Plus, Check, X, Maximize2 } from "lucide-react";
 import { SECTION_PRESETS } from "../utils/sectionHelpers";
 import { useResizableHeight } from "../hooks/useResizableHeight.js";
+import { useAutoScroll } from "../hooks/useAutoScroll.js";
+import AutoplayControl from "./AutoplayControl.jsx";
 
 export default function LyricsPanel({
   theme,
@@ -12,8 +14,8 @@ export default function LyricsPanel({
   addSection,
   chordColor,
   showLineNumbers,
-  inModal = false, 
-  onToggleFullscreen, 
+  inModal = false,
+  onToggleFullscreen,
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
@@ -21,6 +23,8 @@ export default function LyricsPanel({
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
+
+  const autoplay = useAutoScroll(textareaRef, { active: inModal });
 
   const pendingScrollRef = useRef(false);
 
@@ -83,27 +87,43 @@ export default function LyricsPanel({
         >
           Lyrics
         </span>
-        {onToggleFullscreen && (
-          <button
-            onClick={onToggleFullscreen}
-            title={inModal ? "Exit fullscreen" : "Expand"}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "26px",
-              height: "26px",
-              flexShrink: 0,
-              borderRadius: "6px",
-              border: `1px solid ${theme.border}`,
-              background: theme.panel,
-              color: theme.textSecondary,
-              cursor: "pointer",
-            }}
-          >
-            {inModal ? <X size={13} /> : <Maximize2 size={13} />}
-          </button>
-        )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          {inModal && (
+            <AutoplayControl
+              theme={theme}
+              chordColor={chordColor}
+              isPlaying={autoplay.isPlaying}
+              onToggle={autoplay.toggle}
+              speedLabel={autoplay.speedLabel}
+              onIncreaseSpeed={autoplay.increaseSpeed}
+              onDecreaseSpeed={autoplay.decreaseSpeed}
+              canIncrease={autoplay.canIncrease}
+              canDecrease={autoplay.canDecrease}
+            />
+          )}
+          {onToggleFullscreen && (
+            <button
+              onClick={onToggleFullscreen}
+              title={inModal ? "Exit fullscreen" : "Expand"}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "26px",
+                height: "26px",
+                flexShrink: 0,
+                borderRadius: "6px",
+                border: `1px solid ${theme.border}`,
+                background: theme.panel,
+                color: theme.textSecondary,
+                cursor: "pointer",
+              }}
+            >
+              {inModal ? <X size={13} /> : <Maximize2 size={13} />}
+            </button>
+          )}
+        </div>
       </div>
 
       <div
