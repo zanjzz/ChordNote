@@ -1,6 +1,6 @@
 // src/components/LyricsPanel.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Check, X, Maximize2 } from "lucide-react";
+import { Plus, Check, X, Maximize2, ExternalLink } from "lucide-react";
 import { SECTION_PRESETS } from "../utils/sectionHelpers";
 import { useResizableHeight } from "../hooks/useResizableHeight.js";
 import { useAutoScroll } from "../hooks/useAutoScroll.js";
@@ -16,6 +16,7 @@ export default function LyricsPanel({
   showLineNumbers,
   inModal = false,
   onToggleFullscreen,
+  onOpenPage,
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
@@ -101,6 +102,27 @@ export default function LyricsPanel({
               canIncrease={autoplay.canIncrease}
               canDecrease={autoplay.canDecrease}
             />
+          )}
+          {!inModal && onOpenPage && (
+            <button
+              onClick={onOpenPage}
+              title="Open full page in a new tab"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "26px",
+                height: "26px",
+                flexShrink: 0,
+                borderRadius: "6px",
+                border: `1px solid ${theme.border}`,
+                background: theme.panel,
+                color: theme.textSecondary,
+                cursor: "pointer",
+              }}
+            >
+              <ExternalLink size={13} />
+            </button>
           )}
           {onToggleFullscreen && (
             <button

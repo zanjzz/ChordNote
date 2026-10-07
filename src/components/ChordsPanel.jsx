@@ -1,6 +1,6 @@
 // src/components/ChordsPanel.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Maximize2, X } from "lucide-react";
+import { Maximize2, X, ExternalLink } from "lucide-react";
 import { isSectionLabel, labelText } from "../utils/sectionHelpers";
 import { normalizeChordLine } from "../utils/chordTranspose";
 import { convertChordLine } from "../utils/nashvilleNumbers";
@@ -20,6 +20,7 @@ export default function ChordsPanel({
   musicKey,
   inModal = false,
   onToggleFullscreen,
+  onOpenPage,
 }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [focusedIndex, setFocusedIndex] = useState(null);
@@ -156,6 +157,27 @@ export default function ChordsPanel({
               canIncrease={autoplay.canIncrease}
               canDecrease={autoplay.canDecrease}
             />
+          )}
+          {!inModal && onOpenPage && (
+            <button
+              onClick={onOpenPage}
+              title="Open full page in a new tab"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "26px",
+                height: "26px",
+                flexShrink: 0,
+                borderRadius: "6px",
+                border: `1px solid ${theme.border}`,
+                background: theme.panel,
+                color: theme.textSecondary,
+                cursor: "pointer",
+              }}
+            >
+              <ExternalLink size={13} />
+            </button>
           )}
           {onToggleFullscreen && (
             <button

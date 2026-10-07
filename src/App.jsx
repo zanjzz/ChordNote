@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import ChordSheetEditor from "./components/ChordSheetEditor.jsx";
 import LandingPage from "./components/LandingPage.jsx";
+import ChartPage from "./components/ChartPage.jsx";
+import { decodeShareData } from "./utils/shareCodec.js";
 import "./index.css";
 
 const VISITED_KEY = "chordnote_visited_editor";
@@ -20,6 +22,20 @@ function markEditorVisited() {
 }
 
 function App() {
+  // ── Full-page chart view (new tab) ──────────────────────────────────────
+  // ?view=lyrics or ?view=chords short-circuits everything else and renders
+  // the standalone ChartPage. Song data comes from the ?data= param (same
+  // encoding used by the share feature).
+  const params = new URLSearchParams(window.location.search);
+  const viewMode = params.get("view"); // "lyrics" | "chords" | null
+
+  if (viewMode === "lyrics" || viewMode === "chords") {
+    const encoded = params.get("data");
+    const song = encoded ? decodeShareData(encoded) ?? {} : {};
+    return <ChartPage song={song} mode={viewMode} />;
+  }
+
+  // ── Normal editor / landing routing ─────────────────────────────────────
   const [showEditor, setShowEditor] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return (

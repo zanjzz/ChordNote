@@ -704,6 +704,33 @@ export default function ChordSheetEditor({ onGoHome }) {
     !milestoneToast.isLimit &&
     !milestoneCloseUnlocked;
 
+  // ---- Open dedicated full-page view in a new tab ----
+  // Encodes the current song state the same way the share feature does,
+  // then opens ?view=<mode>&data=<encoded> in a new browser tab.
+  const openPageView = (mode) => {
+    const dataToEncode = {
+      title,
+      author,
+      bpm,
+      musicKey,
+      capo,
+      lyrics,
+      chords,
+      transposeOffset,
+      editorFontSize,
+      chordColor,
+      columns,
+      alignment,
+      darkMode,
+      showLineNumbers,
+      chordDisplayMode,
+      accidentalPreference,
+    };
+    const encoded = encodeShareData(dataToEncode);
+    const url = `${window.location.origin}${window.location.pathname}?view=${mode}&data=${encoded}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   // fullscreen wrapper styles
   const fullscreenWrapperStyle = {
     position: "fixed",
@@ -938,6 +965,7 @@ export default function ChordSheetEditor({ onGoHome }) {
                       fullscreenPanel === "lyrics" ? null : "lyrics",
                     )
                   }
+                  onOpenPage={() => openPageView("lyrics")}
                 />
               </div>
             </div>
@@ -982,6 +1010,7 @@ export default function ChordSheetEditor({ onGoHome }) {
                       fullscreenPanel === "chords" ? null : "chords",
                     )
                   }
+                  onOpenPage={() => openPageView("chords")}
                 />
               </div>
             </div>
