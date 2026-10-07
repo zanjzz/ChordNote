@@ -48,15 +48,37 @@ export function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-export function wrapChordLine(ctx, text, maxWidth) {
+// Measures the rendered width of a chord line with inter-token whitespace
+// scaled by `chordSpacing`. Leading whitespace and the token glyphs keep
+// their natural width; only the gaps *between* tokens (and any leading gap)
+// are scaled, matching how the draw loop positions tokens. chordSpacing of
+// 1 reproduces the plain measureText width exactly.
+function measureChordLineWidth(ctx, line, chordSpacing = 1) {
+  if (!line) return 0;
+  // Split into [gap, token, gap, token, …]; even indices are whitespace.
+  const segments = line.split(/(\S+)/);
+  let width = 0;
+  segments.forEach((seg, i) => {
+    if (seg === "") return;
+    const isWhitespace = i % 2 === 0;
+    const w = ctx.measureText(seg).width;
+    width += isWhitespace ? w * chordSpacing : w;
+  });
+  return width;
+}
+
+export function wrapChordLine(ctx, text, maxWidth, chordSpacing = 1) {
   if (!text) return [""];
-  if (ctx.measureText(text).width <= maxWidth) return [text];
+  if (measureChordLineWidth(ctx, text, chordSpacing) <= maxWidth) return [text];
   const tokens = text.split(/(\s+)/).filter((t) => t.length > 0);
   const lines = [];
   let current = "";
   tokens.forEach((tok) => {
     const test = current + tok;
-    if (ctx.measureText(test).width > maxWidth && current.trim() !== "") {
+    if (
+      measureChordLineWidth(ctx, test, chordSpacing) > maxWidth &&
+      current.trim() !== ""
+    ) {
       lines.push(current.replace(/\s+$/, ""));
       current = tok.trim() === "" ? "" : tok;
     } else {
@@ -181,6 +203,31 @@ function selectBreakIndex(candidates, naturalEndIndex, maxBodyHeight) {
   return naturalEndIndex;
 }
 
+// Normalizes chord case while preserving any leading whitespace the user
+// has added to position a chord over a specific lyric word. normalizeChordCase
+// calls .trim() internally, so it strips leading spaces from single-token
+// chords like " Am" and returns "Am". By extracting the prefix first and
+// reattaching it, the canvas renderer sees the same leading offset that the
+// ChordsPanel stored.
+function normalizeChordCasePreserving(raw) {
+  if (!raw) return raw;
+  const leading = raw.match(/^ */)[0];
+  const normalized = normalizeChordCase(raw);
+  // If normalizeChordCase changed the string (i.e. it was a single token
+  // that got case-corrected), reattach the original leading whitespace.
+  return leading + normalized.trimStart();
+}
+// Single source of truth for the per-line gap values used by both the
+// measurement passes (measureLineHeights, generatePages) and the draw
+// pass (buildSingleCanvas). All callers must use these instead of
+// baseChordGap / baseLineGap so measurement and drawing always agree.
+function computeLineGaps(renderChordSize, renderLyricSize, lineHeight) {
+  return {
+    lineGap: renderLyricSize * lineHeight,
+    chordGap: renderChordSize * lineHeight,
+  };
+}
+
 // 👇 NEW: single source of truth for per-line height measurement, used by
 // both the page-break pass (generatePages) and the column-split pass
 // (buildSingleCanvas). Previously these were two separate, slightly
@@ -197,12 +244,17 @@ function measureLineHeights({
   mctx,
   renderLyricSize,
   renderChordSize,
+  lineHeight,
   lyricFont,
   chordFont,
   colWidth,
   metrics,
+  chordSpacing = 1.0,
+  blockSpacing = 1.0,
+  labelSpacing = 1.0,
 }) {
-  const { baseChordGap, baseLineGap, baseBlockGap, emptyLineHeight } = metrics;
+  const { baseBlockGap, emptyLineHeight } = metrics;
+  const { lineGap, chordGap } = computeLineGaps(renderChordSize, renderLyricSize, lineHeight);
   let lastWasEmpty = false;
   let isFirstBlock = true;
   return pageLines.map((line, j) => {
@@ -216,8 +268,8 @@ function measureLineHeights({
     if (isSectionLabel(line)) {
       const h = computeLabelHeight(
         metrics,
-        1.0, // blockSpacing/labelSpacing are applied by the caller if needed;
-        1.0, // for the split-measurement pass we only need relative heights.
+        blockSpacing,
+        labelSpacing,
         isFirstBlock,
       );
       isFirstBlock = false;
@@ -235,12 +287,12 @@ function measureLineHeights({
     mctx.font = `700 ${renderChordSize}px ${chordFont}`;
     const chordWrapped = showChords
       ? chordLine
-        ? wrapChordLine(mctx, chordLine, colWidth)
+        ? wrapChordLine(mctx, chordLine, colWidth, chordSpacing)
         : [""]
       : [];
     return (
-      baseChordGap * chordWrapped.length +
-      wrapped.length * baseLineGap +
+      chordGap * chordWrapped.length +
+      wrapped.length * lineGap +
       baseBlockGap
     );
   });
@@ -291,6 +343,7 @@ export function buildSingleCanvas({
   chordBgOpacity = 0.15,
   chordBgPadding = 4,
   chordBgRadius = 4,
+  chordSpacing = 1.0,
 }) {
   let theme;
   if (canvasTheme === "dark") {
@@ -356,10 +409,20 @@ export function buildSingleCanvas({
   const headerHeightForBudget = headerMetricsForBudget
     ? headerMetricsForBudget.height
     : 0;
+  // Top-ink headroom reserved so the first row's ascenders stay inside the
+  // safe area (see bodyTop below). Must be subtracted from the body budget
+  // so column-split measurement matches what's actually drawable.
+  const topInkForBudget =
+    Math.max(renderChordSize, renderLyricSize, renderLabelSize) * 0.8;
   // Real per-column height budget (single column's worth of body space),
   // used below to decide whether column 1 alone can hold everything.
   const singleColBodyBudget =
-    PAGE_HEIGHT - headerHeightForBudget - padding - 12 - bottomMargin;
+    PAGE_HEIGHT -
+    headerHeightForBudget -
+    padding -
+    12 -
+    topInkForBudget -
+    bottomMargin;
 
   let columnLines, columnOffsets;
   if (columns === 2) {
@@ -373,10 +436,14 @@ export function buildSingleCanvas({
       mctx,
       renderLyricSize,
       renderChordSize,
+      lineHeight,
       lyricFont,
       chordFont,
       colWidth,
       metrics,
+      chordSpacing,
+      blockSpacing,
+      labelSpacing,
     });
     const totalHeight = lineHeights.reduce((a, b) => a + b, 0);
 
@@ -386,13 +453,15 @@ export function buildSingleCanvas({
       // near-empty column just for the sake of using the layout.
       splitIdx = pageLines.length;
     } else {
-      // 👇 CHANGED: fill column 1 to capacity first — normal document /
-      // newspaper column flow — instead of balancing toward the 50/50
-      // midpoint. Balancing was what caused the left column to sit with
-      // visible empty space at the bottom while the right column was
-      // full: it split by height *evenly*, not by "pack column 1 as
-      // full as it'll go". A real multi-column layout fills left to
-      // right, one column at a time.
+      // Fill column 1 line-by-line up to its height budget, then overflow
+      // the remainder into column 2. This is true newspaper column flow:
+      // the split lands at the exact line where column 1 runs out of room,
+      // NOT snapped to a section boundary. Snapping to sections used to
+      // shove an entire block to column 2, leaving a large empty gap at
+      // the bottom of column 1 — especially visible at larger font sizes.
+      // Line-by-line keeps column 1 as full as it can be while column 2
+      // naturally holds only the overflow, so the two columns stay
+      // balanced rather than column 2 looking more populated than column 1.
       let cumulative = 0;
       splitIdx = pageLines.length;
       for (let i = 0; i < pageLines.length; i++) {
@@ -407,39 +476,15 @@ export function buildSingleCanvas({
       // to go somewhere.
       splitIdx = Math.max(splitIdx, 1);
 
-      // Prefer to snap the split to a nearby [Section] label so a block
-      // doesn't get sliced across the column break — check backward
-      // first (pulling the break earlier keeps column 1 within budget),
-      // then forward as a fallback.
-      const SPLIT_LABEL_TOLERANCE = 3;
-      const fitsAt = (idx) =>
-        lineHeights.slice(0, idx).reduce((a, b) => a + b, 0) <=
-        singleColBodyBudget;
-
-      let bestSnap = null;
-      for (
-        let i = splitIdx;
-        i >= Math.max(splitIdx - SPLIT_LABEL_TOLERANCE, 1);
-        i--
+      // Don't start column 2 on a blank line or a dangling chord-less
+      // separator — if the split lands on a blank line, nudge it forward
+      // past the blank so column 2 begins with real content.
+      while (
+        splitIdx < pageLines.length &&
+        pageLines[splitIdx].trim() === ""
       ) {
-        if (isSectionLabel(pageLines[i]) && fitsAt(i)) {
-          bestSnap = i;
-          break;
-        }
+        splitIdx++;
       }
-      if (bestSnap === null) {
-        for (
-          let i = splitIdx + 1;
-          i <= Math.min(splitIdx + SPLIT_LABEL_TOLERANCE, pageLines.length - 1);
-          i++
-        ) {
-          if (isSectionLabel(pageLines[i]) && fitsAt(i)) {
-            bestSnap = i;
-            break;
-          }
-        }
-      }
-      if (bestSnap !== null) splitIdx = bestSnap;
     }
 
     // Guard against an empty left column.
@@ -473,7 +518,7 @@ export function buildSingleCanvas({
       }
       const actualIndex = startLine + columnOffsets[colIdx] + j;
       const rawChord = showChords ? chords[actualIndex] || "" : "";
-      const normalizedChord = normalizeChordCase(rawChord);
+      const normalizedChord = normalizeChordCasePreserving(rawChord);
 
       const chordLine =
         chordDisplayMode !== "letters" && musicKey
@@ -490,13 +535,13 @@ export function buildSingleCanvas({
       mctx.font = `700 ${renderChordSize}px ${chordFont}`;
       const chordWrapped = showChords
         ? chordLine
-          ? wrapChordLine(mctx, chordLine, colWidth)
+          ? wrapChordLine(mctx, chordLine, colWidth, chordSpacing)
           : [""]
         : [];
 
       const chordWidth = Math.max(
         0,
-        ...chordWrapped.map((c) => mctx.measureText(c).width),
+        ...chordWrapped.map((c) => measureChordLineWidth(mctx, c, chordSpacing)),
       );
 
       mctx.font = `${renderLyricSize}px ${lyricFont}`;
@@ -515,6 +560,8 @@ export function buildSingleCanvas({
     });
     return entries;
   });
+
+  const { lineGap, chordGap } = computeLineGaps(renderChordSize, renderLyricSize, lineHeight);
 
   const colHeights = columnsWrapped.map((entries) => {
     let h = 0;
@@ -535,8 +582,8 @@ export function buildSingleCanvas({
         return;
       }
       h +=
-        baseChordGap * e.chordWrapped.length +
-        e.wrapped.length * baseLineGap +
+        chordGap * e.chordWrapped.length +
+        e.wrapped.length * lineGap +
         baseBlockGap;
     });
     return h;
@@ -561,49 +608,6 @@ export function buildSingleCanvas({
       : null;
   const headerHeight = headerMetrics ? headerMetrics.height : 0;
 
-  const totalBodyHeight =
-    PAGE_HEIGHT - headerHeight - padding - 12 - bottomMargin;
-  const extraSpace = Math.max(0, totalBodyHeight - bodyHeight);
-
-  let totalFlexUnits = 0;
-  columnsWrapped.forEach((entries) => {
-    entries.forEach((e) => {
-      if (!e.isLabel && !e.isEmpty) {
-        totalFlexUnits += e.wrapped.length + e.chordWrapped.length;
-      }
-    });
-  });
-
-  // 👇 CHANGED: this "stretch spacing to fill leftover page space" pass
-  // is what made line height inconsistent across pages of the same
-  // song — a nearly-full page (little/no extraSpace) rendered at close
-  // to base spacing, while a sparse trailing page (e.g. the last page,
-  // holding just a few leftover lines) had a huge extraSpace relative to
-  // its own tiny content, so it got stretched much looser than every
-  // page before it. That's a nice effect for a single-page song (fills
-  // the sheet nicely instead of clumping at the top) but actively wrong
-  // for a multi-page one, where every page should read at the same
-  // density. Fix: only ever apply the stretch when the whole document is
-  // a single page. Multi-page documents always render at base spacing
-  // on every page, so page 1 and page 4 look identical.
-  const isSinglePageDoc = totalPages <= 1;
-  const FULL_FILL_WASTE_RATIO = 0.3; // leftover at or below this fraction of the page gets fully absorbed into spacing
-  const extraSpaceRatio =
-    totalBodyHeight > 0 ? extraSpace / totalBodyHeight : 0;
-  const fillScale = !isSinglePageDoc
-    ? 0
-    : extraSpaceRatio <= FULL_FILL_WASTE_RATIO
-      ? 1
-      : FULL_FILL_WASTE_RATIO / extraSpaceRatio;
-  const effectiveExtraSpace = extraSpace * fillScale;
-
-  const maxExtraPerUnit = scaledFontSize * 1.4;
-  const rawExtraPerUnit =
-    totalFlexUnits > 0 ? effectiveExtraSpace / totalFlexUnits : 0;
-  const extraPerUnit = Math.min(rawExtraPerUnit, maxExtraPerUnit);
-
-  const lineGap = baseLineGap + extraPerUnit;
-  const chordGap = baseChordGap + extraPerUnit;
   const blockGap = baseBlockGap;
   const labelHeight = baseLabelHeight;
 
@@ -655,12 +659,37 @@ export function buildSingleCanvas({
     }
   }
 
-  const bodyTop = padding + headerHeight + 12;
+  // The first drawn row's baseline must sit far enough below the top safe
+  // area that its glyph ascenders don't poke above `padding` (where the
+  // clip region starts). fillText draws from the baseline, and ascenders
+  // rise ~0.8× the font size above it. We reserve the tallest possible
+  // first-row ascent (chord, lyric, or label font — whichever is largest)
+  // so the top row is never clipped on ANY page, including pages with no
+  // header. This is applied uniformly so every page's top margin matches.
+  const topInk =
+    Math.max(renderChordSize, renderLyricSize, renderLabelSize) * 0.8;
+  const bodyTop = padding + headerHeight + 12 + topInk;
+
+  const bodyBottom = PAGE_HEIGHT - padding; // bottom safe-area boundary
 
   columnsWrapped.forEach((entries, colIdx) => {
     const colLeft =
       columns === 2 ? padding + colIdx * (colWidth + COL_GAP) : padding;
     const colCenter = colLeft + colWidth / 2;
+
+    // Clip to the column's horizontal bounds and the page's vertical safe
+    // area. Use padding as the top edge (not bodyTop) so that label text,
+    // whose baseline sits at bodyTop + labelTopGap, isn't clipped when
+    // labelTopGap is smaller than the label font's ascender height.
+    // The right edge extends to colLeft + colWidth for normal left-aligned
+    // content; for center-aligned single-column we use the full inner width
+    // so wide centered text isn't clipped.
+    const clipLeft = colLeft;
+    const clipRight = columns === 2 ? colLeft + colWidth : PAGE_WIDTH - padding;
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(clipLeft, padding, clipRight - clipLeft, bodyBottom - padding);
+    ctx.clip();
 
     let cy = bodyTop;
     let isFirstBlock = true;
@@ -717,11 +746,22 @@ export function buildSingleCanvas({
         const yPos = cy + idx * chordGap;
 
         if (cline && cline.trim()) {
-          if (showChordBg && cline.trim()) {
-            const tokens = cline.split(/\s+/).filter((t) => t.length > 0);
-            const spaces = cline.match(/\s+/g) || [];
+          // Split the chord line into alternating [gap, token, …] segments.
+          // Even-indexed segments are whitespace (may be ""); odd are tokens.
+          const segments = cline.split(/(\S+)/);
+          const leadingGapWidth =
+            ctx.measureText(segments[0] || "").width * chordSpacing;
 
-            let currentX = chordStartX;
+          const gapAfterToken = (i) =>
+            ctx.measureText(segments[2 * i + 2] || "").width * chordSpacing;
+
+          // Build token list (same filter as before, but we need the full
+          // segments array for accurate gap widths).
+          const tokens = segments.filter((_, i) => i % 2 === 1); // odd = tokens
+
+          let currentX = chordStartX + leadingGapWidth;
+
+          if (showChordBg && tokens.length > 0) {
             const bgColor = chordBgColor || chordColor;
             const bgOpacity =
               chordBgOpacity !== undefined ? chordBgOpacity : 0.15;
@@ -732,9 +772,8 @@ export function buildSingleCanvas({
 
             tokens.forEach((token, i) => {
               if (!token) return;
-
-              const metrics = ctx.measureText(token);
-              const textWidth = metrics.width;
+              const tokenMetrics = ctx.measureText(token);
+              const textWidth = tokenMetrics.width;
               const textHeight = renderChordSize * 0.9;
 
               const rectX = currentX - bgPadding;
@@ -752,42 +791,34 @@ export function buildSingleCanvas({
               ctx.beginPath();
               ctx.moveTo(rectX + r, rectY);
               ctx.lineTo(rectX + rectWidth - r, rectY);
-              ctx.quadraticCurveTo(
-                rectX + rectWidth,
-                rectY,
-                rectX + rectWidth,
-                rectY + r,
-              );
+              ctx.quadraticCurveTo(rectX + rectWidth, rectY, rectX + rectWidth, rectY + r);
               ctx.lineTo(rectX + rectWidth, rectY + rectHeight - r);
-              ctx.quadraticCurveTo(
-                rectX + rectWidth,
-                rectY + rectHeight,
-                rectX + rectWidth - r,
-                rectY + rectHeight,
-              );
+              ctx.quadraticCurveTo(rectX + rectWidth, rectY + rectHeight, rectX + rectWidth - r, rectY + rectHeight);
               ctx.lineTo(rectX + r, rectY + rectHeight);
-              ctx.quadraticCurveTo(
-                rectX,
-                rectY + rectHeight,
-                rectX,
-                rectY + rectHeight - r,
-              );
+              ctx.quadraticCurveTo(rectX, rectY + rectHeight, rectX, rectY + rectHeight - r);
               ctx.lineTo(rectX, rectY + r);
               ctx.quadraticCurveTo(rectX, rectY, rectX + r, rectY);
               ctx.closePath();
               ctx.fill();
 
-              currentX +=
-                textWidth +
-                (spaces[i] ? spaces[i].length * ctx.measureText(" ").width : 0);
+              currentX += textWidth + gapAfterToken(i);
             });
 
             ctx.restore();
           }
-        }
 
-        // Draw chord text on top
-        ctx.fillText(cline || "", chordStartX, yPos);
+          // Draw chord tokens individually so their positions match the
+          // highlight positions (both use the same chordSpacing-scaled gaps).
+          // This replaces the single fillText(cline) call which couldn't
+          // account for scaled whitespace.
+          ctx.fillStyle = chordColor;
+          let drawX = chordStartX + leadingGapWidth;
+          tokens.forEach((token, i) => {
+            if (!token) return;
+            ctx.fillText(token, drawX, yPos);
+            drawX += ctx.measureText(token).width + gapAfterToken(i);
+          });
+        }
       });
 
       // Adjust cy to after the last chord line
@@ -803,6 +834,9 @@ export function buildSingleCanvas({
         cy += lineGap;
       });
     });
+
+    // End of column — restore clip region.
+    ctx.restore();
   });
 
   return canvas;
@@ -846,6 +880,7 @@ export function generatePages({
   chordBgOpacity = 0.15,
   chordBgPadding = 4,
   chordBgRadius = 4,
+  chordSpacing = 1.0,
 }) {
   const pages = [];
   let currentLine = 0;
@@ -871,9 +906,15 @@ export function generatePages({
   const SCALE_FACTOR = 3.5;
   const renderLyricSize = lyricFontSize * SCALE_FACTOR;
   const renderChordSize = chordFontSize * SCALE_FACTOR;
+  const renderLabelSize = (labelFontSize || 12) * SCALE_FACTOR;
   mctx.font = `${renderLyricSize}px ${lyricFont}`;
 
+  const lineGaps = computeLineGaps(renderChordSize, renderLyricSize, lineHeight);
   const safetyBuffer = scaledFontSize * 0.75;
+  // Must match the topInk reserved in buildSingleCanvas so page breaks
+  // leave room for the first row's ascenders on every page/column.
+  const topInk =
+    Math.max(renderChordSize, renderLyricSize, renderLabelSize) * 0.8;
 
   while (currentLine < lines.length) {
     const headerHeight =
@@ -887,9 +928,12 @@ export function generatePages({
         : 0;
 
     const columnMultiplier = columns === 2 ? 2 : 1;
-    const maxBodyHeight =
-      (PAGE_HEIGHT - headerHeight - padding - 12 - padding) * columnMultiplier -
-      safetyBuffer;
+    // Per-column usable height (header only exists on page 0). topInk is
+    // reserved once per column since each column's first row needs the
+    // same ascender headroom.
+    const perColumnBody =
+      PAGE_HEIGHT - headerHeight - padding - 12 - topInk - padding;
+    const maxBodyHeight = perColumnBody * columnMultiplier - safetyBuffer;
 
     let endLine = currentLine;
     let tempHeight = 0;
@@ -931,7 +975,7 @@ export function generatePages({
           isFirstBlock = false;
         } else {
           const rawChord = showChords ? chords[endLine] || "" : "";
-          const normalizedChord = normalizeChordCase(rawChord);
+          const normalizedChord = normalizeChordCasePreserving(rawChord);
           const chordLine =
             chordDisplayMode !== "letters" && musicKey
               ? convertChordLine(normalizedChord, musicKey, chordDisplayMode)
@@ -946,13 +990,13 @@ export function generatePages({
           mctx.font = `700 ${renderChordSize}px ${chordFont}`;
           const chordLines = showChords
             ? chordLine
-              ? wrapChordLine(mctx, chordLine, colWidth).length
+              ? wrapChordLine(mctx, chordLine, colWidth, chordSpacing).length
               : 1
             : 0;
 
           tempHeight +=
-            baseChordGap * chordLines +
-            wrapped.length * baseLineGap +
+            lineGaps.chordGap * chordLines +
+            wrapped.length * lineGaps.lineGap +
             baseBlockGap;
         }
       }
@@ -1026,6 +1070,7 @@ export async function downloadPages({
   chordBgOpacity = 0.15,
   chordBgPadding = 4,
   chordBgRadius = 4,
+  chordSpacing = 1.0,
 }) {
   if (!pages || pages.length === 0) return;
 
@@ -1077,6 +1122,7 @@ export async function downloadPages({
       chordBgOpacity,
       chordBgPadding,
       chordBgRadius,
+      chordSpacing,
     }),
   );
 

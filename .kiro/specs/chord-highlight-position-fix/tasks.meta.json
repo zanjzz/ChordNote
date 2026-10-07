@@ -1,0 +1,22 @@
+{
+  "pbtResults": {
+    "1. Write bug condition exploration test": {
+      "status": "passed",
+      "failingExample": "Counterexample: [1, \"A\"] — 1 leading space + chord \"A\": highlight drawn at x=130 (chordStartX, wrong) instead of x=140 (chordStartX + 1*CHAR_WIDTH, correct). Also: cline=\"   Am\" → pill at x=130 instead of x=160; cline=\"  Dm  F\" → first pill at x=130 instead of x=150; center-aligned \"   Am\" → pill at x=1265 instead of x=1280. All confirm currentX starts at chordStartX (no leading-space offset).",
+      "lastRunTimestamp": 1790225838908
+    },
+    "2. Write preservation property tests (BEFORE implementing fix)": {
+      "status": "passed",
+      "lastRunTimestamp": 1790225843196
+    },
+    "3.3 Verify bug condition exploration test now passes": {
+      "status": "passed",
+      "lastRunTimestamp": 1790226125248
+    },
+    "3.4 Verify preservation tests still pass": {
+      "status": "passed",
+      "lastRunTimestamp": 1790226130675
+    }
+  },
+  "executionHistory": {}
+}
