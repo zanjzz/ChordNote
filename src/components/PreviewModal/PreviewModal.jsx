@@ -92,6 +92,7 @@ export default function PreviewModal({
   const [chordBgOpacity, setChordBgOpacity] = useState(0.15);
   const [chordBgPadding, setChordBgPadding] = useState(4);
   const [chordBgRadius, setChordBgRadius] = useState(4);
+  const [chordSpacing, setChordSpacing] = useState(1.0);
 
   const [pageRanges, setPageRanges] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -189,6 +190,7 @@ export default function PreviewModal({
         chordBgOpacity,
         chordBgPadding,
         chordBgRadius,
+        chordSpacing,
       ]),
     [
       lines,
@@ -231,6 +233,7 @@ export default function PreviewModal({
       chordBgOpacity,
       chordBgPadding,
       chordBgRadius,
+      chordSpacing,
     ],
   );
 
@@ -283,6 +286,7 @@ export default function PreviewModal({
         chordBgOpacity,
         chordBgPadding,
         chordBgRadius,
+        chordSpacing,
       });
       setPageRanges(ranges);
       setCurrentPage((prev) => (prev >= ranges.length ? 0 : prev));
@@ -345,6 +349,7 @@ export default function PreviewModal({
       chordBgOpacity,
       chordBgPadding,
       chordBgRadius,
+      chordSpacing,
     });
   }, [showPreview, pageRanges, currentPage, settingsKey]);
 
@@ -407,6 +412,7 @@ export default function PreviewModal({
             chordBgOpacity,
             chordBgPadding,
             chordBgRadius,
+            chordSpacing,
           });
           cache.set(nextIdx, canvas);
         }
@@ -518,6 +524,7 @@ export default function PreviewModal({
         chordBgOpacity,
         chordBgPadding,
         chordBgRadius,
+        chordSpacing,
       });
       showDownloadFeedback(ext.toUpperCase());
     } finally {
@@ -568,6 +575,7 @@ export default function PreviewModal({
         chordBgOpacity,
         chordBgPadding,
         chordBgRadius,
+        chordSpacing,
       });
       const { buildSingleCanvas } = helpersRef.current;
       const pdf = new jsPDF("p", "px", "letter");
@@ -620,6 +628,7 @@ export default function PreviewModal({
           chordBgOpacity,
           chordBgPadding,
           chordBgRadius,
+          chordSpacing,
         });
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
         if (i > 0) pdf.addPage();
@@ -908,6 +917,8 @@ export default function PreviewModal({
             setChordBgPadding={setChordBgPadding}
             chordBgRadius={chordBgRadius}
             setChordBgRadius={setChordBgRadius}
+            chordSpacing={chordSpacing}
+            setChordSpacing={setChordSpacing}
           />
         </div>
       </div>

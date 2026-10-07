@@ -96,6 +96,9 @@ export default function ToolsSidebar(props) {
     setChordBgPadding,
     chordBgRadius,
     setChordBgRadius,
+    // Chord Spacing
+    chordSpacing,
+    setChordSpacing,
   } = props;
 
   return (
@@ -216,6 +219,8 @@ export default function ToolsSidebar(props) {
           setBlockSpacing={setBlockSpacing}
           metaLyricsGap={metaLyricsGap}
           setMetaLyricsGap={setMetaLyricsGap}
+          chordSpacing={chordSpacing}
+          setChordSpacing={setChordSpacing}
         />
 
         <LayoutControls

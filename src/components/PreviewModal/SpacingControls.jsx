@@ -17,6 +17,8 @@ export default function SpacingControls({
   setBlockSpacing,
   metaLyricsGap,
   setMetaLyricsGap,
+  chordSpacing,
+  setChordSpacing,
 }) {
   const themeObj = {
     border: borderColor,
@@ -160,6 +162,15 @@ export default function SpacingControls({
           0.2,
           3.0,
           2,
+        )}
+        {renderSlider(
+          "Chord spacing",
+          chordSpacing,
+          setChordSpacing,
+          0.1,
+          0.2,
+          3.0,
+          1,
         )}
       </div>
     </div>
