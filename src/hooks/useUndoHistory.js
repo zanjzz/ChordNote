@@ -41,6 +41,10 @@ export function useUndoHistory(isRestoringRef) {
     const snap = pendingRef.current;
     if (!snap) return;
 
+    // Consume the pending snapshot so a subsequent commit() call
+    // (e.g. from flushSnapshot inside undo) doesn't re-push it.
+    pendingRef.current = null;
+
     const prev = lastCommittedRef.current;
     if (prev && prev.lyrics === snap.lyrics && prev.chords === snap.chords) {
       return; // nothing actually changed
@@ -54,6 +58,10 @@ export function useUndoHistory(isRestoringRef) {
   /** Schedule a snapshot. Debounced — safe to call on every keystroke. */
   const pushSnapshot = useCallback(
     (snap) => {
+      // Clear the redo stack immediately when new content arrives so that
+      // a redo can never restore an abandoned branch — even before the
+      // debounce timer fires and commits the snapshot.
+      futureRef.current = [];
       pendingRef.current = snap;
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(commit, DEBOUNCE_MS);

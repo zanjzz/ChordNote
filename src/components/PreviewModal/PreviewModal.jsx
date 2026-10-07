@@ -481,6 +481,7 @@ export default function PreviewModal({
           chordBgOpacity,
           chordBgPadding,
           chordBgRadius,
+          chordSpacing,
         }),
         title,
         lines,

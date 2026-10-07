@@ -203,6 +203,20 @@ function selectBreakIndex(candidates, naturalEndIndex, maxBodyHeight) {
   return naturalEndIndex;
 }
 
+// Normalizes chord case while preserving any leading whitespace the user
+// has added to position a chord over a specific lyric word. normalizeChordCase
+// calls .trim() internally, so it strips leading spaces from single-token
+// chords like " Am" and returns "Am". By extracting the prefix first and
+// reattaching it, the canvas renderer sees the same leading offset that the
+// ChordsPanel stored.
+function normalizeChordCasePreserving(raw) {
+  if (!raw) return raw;
+  const leading = raw.match(/^ */)[0];
+  const normalized = normalizeChordCase(raw);
+  // If normalizeChordCase changed the string (i.e. it was a single token
+  // that got case-corrected), reattach the original leading whitespace.
+  return leading + normalized.trimStart();
+}
 // Single source of truth for the per-line gap values used by both the
 // measurement passes (measureLineHeights, generatePages) and the draw
 // pass (buildSingleCanvas). All callers must use these instead of
@@ -236,6 +250,8 @@ function measureLineHeights({
   colWidth,
   metrics,
   chordSpacing = 1.0,
+  blockSpacing = 1.0,
+  labelSpacing = 1.0,
 }) {
   const { baseBlockGap, emptyLineHeight } = metrics;
   const { lineGap, chordGap } = computeLineGaps(renderChordSize, renderLyricSize, lineHeight);
@@ -252,8 +268,8 @@ function measureLineHeights({
     if (isSectionLabel(line)) {
       const h = computeLabelHeight(
         metrics,
-        1.0,
-        1.0,
+        blockSpacing,
+        labelSpacing,
         isFirstBlock,
       );
       isFirstBlock = false;
@@ -426,6 +442,8 @@ export function buildSingleCanvas({
       colWidth,
       metrics,
       chordSpacing,
+      blockSpacing,
+      labelSpacing,
     });
     const totalHeight = lineHeights.reduce((a, b) => a + b, 0);
 
@@ -500,7 +518,7 @@ export function buildSingleCanvas({
       }
       const actualIndex = startLine + columnOffsets[colIdx] + j;
       const rawChord = showChords ? chords[actualIndex] || "" : "";
-      const normalizedChord = normalizeChordCase(rawChord);
+      const normalizedChord = normalizeChordCasePreserving(rawChord);
 
       const chordLine =
         chordDisplayMode !== "letters" && musicKey
@@ -957,7 +975,7 @@ export function generatePages({
           isFirstBlock = false;
         } else {
           const rawChord = showChords ? chords[endLine] || "" : "";
-          const normalizedChord = normalizeChordCase(rawChord);
+          const normalizedChord = normalizeChordCasePreserving(rawChord);
           const chordLine =
             chordDisplayMode !== "letters" && musicKey
               ? convertChordLine(normalizedChord, musicKey, chordDisplayMode)
