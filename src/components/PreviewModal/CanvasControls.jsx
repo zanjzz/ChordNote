@@ -1,5 +1,6 @@
 // src/components/PreviewModal/CanvasControls.jsx
 import React from "react";
+import { Palette } from "lucide-react";
 import SectionHeader from "./SectionHeader.jsx";
 
 export default function CanvasControls({
@@ -19,7 +20,7 @@ export default function CanvasControls({
 
   return (
     <div style={{ minWidth: 0 }}>
-      <SectionHeader color="#dcc5b5" mutedColor={textMutedColor}>
+      <SectionHeader color="#dcc5b5" mutedColor={textMutedColor} icon={Palette}>
         Canvas
       </SectionHeader>
 

@@ -38,6 +38,7 @@ import { useChordRealignment } from "../hooks/useChordRealignment.js";
 
 // ---- Components ----
 import MetaInput from "./MetaInput.jsx";
+import KeySelect from "./KeySelect.jsx";
 import TopBar from "./TopBar.jsx";
 import ControlsBar from "./ControlsBar.jsx";
 import LyricsPanel from "./LyricsPanel.jsx";
@@ -459,6 +460,10 @@ export default function ChordSheetEditor({ onGoHome }) {
     if (data.detectedMode) {
       setChordDisplayMode(data.detectedMode);
     }
+    // URL imports can carry title/artist; only overwrite when provided
+    // and non-empty so a plain text paste never clears existing fields.
+    if (data.title) setTitle(data.title);
+    if (data.author) setAuthor(data.author);
   };
 
   // ---- Clear function ----
@@ -887,14 +892,11 @@ export default function ChordSheetEditor({ onGoHome }) {
             placeholder="120"
             validate="bpm"
           />
-          <MetaInput
+          <KeySelect
             theme={theme}
-            chordColor={chordColor}
-            label="Key"
             value={musicKey}
             onChange={handleKeyChange}
-            placeholder="G"
-            validate="key"
+            accidentalPreference={accidentalPreference}
           />
           <MetaInput
             theme={theme}

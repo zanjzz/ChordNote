@@ -52,10 +52,10 @@ function IconBtn({ onClick, disabled, colors, children }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: "22px",
-        height: "22px",
+        width: "30px",
+        height: "30px",
         border: "none",
-        borderRadius: "4px",
+        borderRadius: "6px",
         background: "transparent",
         color: disabled ? colors.textMuted : colors.textSecondary,
         cursor: disabled ? "default" : "pointer",
@@ -192,8 +192,17 @@ export default function ChartPage({ song, mode }) {
         overflow: "hidden",
       }}
     >
+      <style>{`
+        @media (max-width: 560px) {
+          .chartpage-navbar { padding: 8px 12px !important; gap: 8px !important; }
+          .chartpage-tools { gap: 6px !important; }
+          .chartpage-navbar img { width: 88px !important; }
+        }
+      `}</style>
+
       {/* ── Top bar — stays fixed above the scrolling content ───────────── */}
       <div
+        className="chartpage-navbar"
         style={{
           flexShrink: 0,
           background: darkMode
@@ -207,7 +216,7 @@ export default function ChartPage({ song, mode }) {
           alignItems: "center",
           justifyContent: "space-between",
           gap: "12px",
-          flexWrap: "wrap",
+          flexWrap: "nowrap",
           boxSizing: "border-box",
         }}
       >
@@ -224,13 +233,14 @@ export default function ChartPage({ song, mode }) {
           />
         </a>
 
-        {/* Right: tools + autoplay */}
+        {/* Right: tools + autoplay — single row, never wraps */}
         <div
+          className="chartpage-tools"
           style={{
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            flexWrap: "wrap",
+            flexWrap: "nowrap",
           }}
         >
           {/* Font size stepper */}
@@ -240,9 +250,10 @@ export default function ChartPage({ song, mode }) {
               alignItems: "center",
               gap: "2px",
               border: `1px solid ${colors.border}`,
-              borderRadius: "6px",
-              padding: "2px",
+              borderRadius: "8px",
+              padding: "3px",
               background: darkMode ? "#1A1A17" : "#FFFFFF",
+              flexShrink: 0,
             }}
             title="Text size"
           >
@@ -251,14 +262,14 @@ export default function ChartPage({ song, mode }) {
               disabled={fontSize <= 12}
               colors={colors}
             >
-              <Minus size={13} />
+              <Minus size={16} />
             </IconBtn>
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "13px",
                 fontWeight: 600,
                 color: colors.textMuted,
-                minWidth: "26px",
+                minWidth: "28px",
                 textAlign: "center",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -270,7 +281,7 @@ export default function ChartPage({ song, mode }) {
               disabled={fontSize >= 40}
               colors={colors}
             >
-              <Plus size={13} />
+              <Plus size={16} />
             </IconBtn>
           </div>
 
@@ -282,21 +293,22 @@ export default function ChartPage({ song, mode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "30px",
-              height: "30px",
+              width: "38px",
+              height: "38px",
               flexShrink: 0,
-              borderRadius: "6px",
+              borderRadius: "8px",
               border: `1px solid ${colors.border}`,
               background: darkMode ? "#1A1A17" : "#FFFFFF",
               color: colors.textSecondary,
               cursor: "pointer",
             }}
           >
-            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+            {darkMode ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           {/* Autoplay control (reuses existing component) */}
           <AutoplayControl
+            size="lg"
             theme={{
               border: colors.border,
               panel: darkMode ? "#1A1A17" : "#FFFFFF",

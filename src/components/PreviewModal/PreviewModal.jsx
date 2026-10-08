@@ -647,6 +647,199 @@ export default function PreviewModal({
     }
   };
 
+  // Print: renders the SAME high-resolution canvases used for export into a
+  // dedicated print window, one full page per sheet. Using the canvas (not
+  // the live DOM) guarantees the printout matches the export exactly and
+  // sidesteps CSS print quirks. Each page image is sized to the printable
+  // sheet and forced onto its own page via page-break rules.
+  const handlePrint = async () => {
+    if (exporting) return;
+
+    // Open the print window SYNCHRONOUSLY, inside the click handler, before
+    // any awaited/long work. Browsers only allow window.open during a fresh
+    // user gesture; if we opened it after rendering all the canvases (which
+    // can take a second), the popup blocker would kill it. We open a blank
+    // window now and fill it after rendering.
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      window.alert(
+        "The print window was blocked by your browser. Please allow pop-ups for this site, then try Print again.",
+      );
+      return;
+    }
+
+    setExporting("print");
+    try {
+      const pages = generatePages({
+        lines,
+        chords,
+        fontSize,
+        author,
+        musicKey,
+        bpm,
+        capo,
+        columns,
+        lineHeight,
+        metaLyricsGap,
+        paddingSize,
+        canvasTheme,
+        customCanvasColor,
+        showChords,
+        showBrackets,
+        blockSpacing,
+        labelSpacing,
+        titleFontSize,
+        titleColor,
+        titleFont,
+        metaFontSize,
+        metaColor,
+        metaFont,
+        chordFontSize,
+        chordFont,
+        lyricFontSize,
+        lyricColor,
+        lyricFont,
+        labelFontSize,
+        labelColor,
+        labelFont,
+        chordDisplayMode,
+        showChordBg,
+        chordBgColor,
+        chordBgOpacity,
+        chordBgPadding,
+        chordBgRadius,
+        chordSpacing,
+      });
+
+      const { buildSingleCanvas } = helpersRef.current;
+      const dataUrls = [];
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = buildSingleCanvas({
+          lines,
+          chords,
+          fontSize,
+          columns,
+          alignment,
+          title,
+          author,
+          musicKey,
+          bpm,
+          capo,
+          chordColor,
+          startLine: pages[i].start,
+          endLine: pages[i].end,
+          pageNum: i,
+          totalPages: pages.length,
+          lineHeight,
+          metaLyricsGap,
+          paddingSize,
+          canvasTheme,
+          customCanvasColor,
+          showChords,
+          showBrackets,
+          blockSpacing,
+          labelSpacing,
+          titleFontSize,
+          titleColor,
+          titleFont,
+          metaFontSize,
+          metaColor,
+          metaFont,
+          chordFontSize,
+          chordFont,
+          lyricFontSize,
+          lyricColor,
+          lyricFont,
+          labelFontSize,
+          labelColor,
+          labelFont,
+          chordDisplayMode,
+          showChordBg,
+          chordBgColor,
+          chordBgOpacity,
+          chordBgPadding,
+          chordBgRadius,
+          chordSpacing,
+        });
+        // PNG keeps text crisp for print (lossless, unlike JPEG).
+        dataUrls.push(canvas.toDataURL("image/png"));
+      }
+
+      const safeTitle = (title || "chord-sheet")
+        .replace(/[/\\?%*:|"<>]/g, "-")
+        .replace(/&/g, "&amp;");
+      const imgs = dataUrls
+        .map(
+          (url) =>
+            `<img src="${url}" alt="chord sheet page" />`,
+        )
+        .join("");
+
+      printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safeTitle}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { background: #fff; }
+      /* US Letter at the canvas aspect ratio (2550x3300 = 8.5x11). */
+      @page { size: letter portrait; margin: 0; }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        /* Each page image fills one sheet and never splits across pages. */
+        page-break-after: always;
+        break-after: page;
+      }
+      img:last-child { page-break-after: auto; break-after: auto; }
+    </style>
+  </head>
+  <body>${imgs}</body>
+</html>`);
+      printWindow.document.close();
+
+      // Wait for the images to decode before invoking print, otherwise some
+      // browsers print blank pages.
+      const waitForImages = () => {
+        const images = Array.from(printWindow.document.images);
+        return Promise.all(
+          images.map((img) =>
+            img.complete
+              ? Promise.resolve()
+              : new Promise((res) => {
+                  img.onload = res;
+                  img.onerror = res;
+                }),
+          ),
+        );
+      };
+
+      await waitForImages();
+
+      // Close the print tab once the print dialog is dismissed (printed or
+      // cancelled). afterprint fires in all modern browsers; the timeout is
+      // a fallback for the rare case it doesn't.
+      printWindow.addEventListener("afterprint", () => {
+        printWindow.close();
+      });
+
+      printWindow.focus();
+      printWindow.print();
+    } catch (error) {
+      console.error("Print failed:", error);
+      // Close the orphaned blank window if rendering failed after it opened.
+      try {
+        printWindow.close();
+      } catch (_) {
+        /* ignore */
+      }
+    } finally {
+      setExporting(null);
+    }
+  };
+
   if (!showPreview) return null;
 
   const modalBg = appTheme === "dark" ? "#181715" : "#FDFCFA";
@@ -700,7 +893,7 @@ export default function PreviewModal({
           >
             <Check size={13} color={panelBg} strokeWidth={3} />
           </span>
-          {downloadFeedback} downloaded
+          {downloadFeedback} downloading…
         </div>
       )}
 
@@ -907,6 +1100,7 @@ export default function PreviewModal({
             exporting={exporting}
             handleExport={handleExport}
             handlePDFExport={handlePDFExport}
+            handlePrint={handlePrint}
             pageRanges={pageRanges}
             showChordBg={showChordBg}
             setShowChordBg={setShowChordBg}

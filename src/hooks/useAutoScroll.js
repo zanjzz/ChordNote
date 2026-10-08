@@ -143,7 +143,18 @@ export function useAutoScroll(scrollRef, { active }) {
         return;
       }
 
-      el.scrollTop = accumRef.current;
+      // Quantize to the DEVICE pixel grid, not the CSS pixel grid. The
+      // browser rounds scrollTop to whole device pixels, so on a 2x/3x
+      // display we can legitimately land on 0.5 / 0.33 CSS-px steps. At
+      // slow speeds this is what removes the visible "stepping": instead
+      // of jumping a whole CSS pixel every N frames, it advances by the
+      // finest increment the screen can actually show. The float
+      // accumulator still carries the exact sub-device-pixel progress
+      // across frames, so no motion is lost — it's just displayed on the
+      // tightest grid available.
+      const dpr = window.devicePixelRatio || 1;
+      const snapped = Math.round(accumRef.current * dpr) / dpr;
+      el.scrollTop = snapped;
       // Read back what the browser actually applied (it may round), so
       // next frame's drift check compares against reality, not our
       // unrounded float.

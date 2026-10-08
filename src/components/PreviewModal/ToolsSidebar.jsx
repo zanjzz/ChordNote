@@ -84,6 +84,7 @@ export default function ToolsSidebar(props) {
     exporting,
     handleExport,
     handlePDFExport,
+    handlePrint,
     pageRanges,
     // Chord Background
     showChordBg,
@@ -138,7 +139,7 @@ export default function ToolsSidebar(props) {
           flex: 1,
           display: "flex",
           flexDirection: "column",
-          gap: "16px",
+          gap: "24px",
           background: panelBg,
           borderRadius: "12px",
           padding: "16px 14px",
@@ -262,6 +263,7 @@ export default function ToolsSidebar(props) {
         exporting={exporting}
         handleExport={handleExport}
         handlePDFExport={handlePDFExport}
+        handlePrint={handlePrint}
         pageRanges={pageRanges}
         textMutedColor={textMutedColor}
         borderColor={borderColor}

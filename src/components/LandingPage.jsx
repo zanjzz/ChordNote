@@ -48,8 +48,8 @@ const FEATURES = [
   },
   {
     icon: ClipboardPaste,
-    title: "Paste to Import",
-    desc: "Copy a chord sheet from the web, paste it in, and modify it however you like. You don't always have to start from scratch.",
+    title: "Paste or Link Import",
+    desc: "Paste a chord sheet, or drop in a link from a chord website and let ChordNote pull it in for you. ChordPro notation works too. You don't always have to start from scratch.",
   },
   {
     icon: Share2,

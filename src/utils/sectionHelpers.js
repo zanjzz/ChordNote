@@ -7,4 +7,18 @@ export function labelText(line) {
   return line.trim().replace(/^\[|\]$/g, "");
 }
 
-export const SECTION_PRESETS = ["Verse", "Chorus", "Bridge", "Intro", "Outro"];
+export const SECTION_PRESETS = [
+  "Intro",
+  "Verse",
+  "Pre-Chorus",
+  "Chorus",
+  "Post-Chorus",
+  "Bridge",
+  "Refrain",
+  "Interlude",
+  "Instrumental",
+  "Tag",
+  "Vamp",
+  "Outro",
+  "Ending",
+];

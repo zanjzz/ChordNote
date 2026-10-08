@@ -1,6 +1,6 @@
 // src/components/PreviewModal/TypographyControls.jsx
 import React from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Type, Music, Mic2, Tag } from "lucide-react";
 import StepBtn from "../StepBtn.jsx";
 import SectionHeader from "./SectionHeader.jsx";
 
@@ -246,7 +246,7 @@ export default function TypographyControls(props) {
   return (
     <div style={{ minWidth: 0 }}>
       {/* ---------- Title ---------- */}
-      <SectionHeader color="#185FA5" mutedColor={textMutedColor}>
+      <SectionHeader color="#185FA5" mutedColor={textMutedColor} icon={Type}>
         Title
       </SectionHeader>
       {renderRow(
@@ -279,8 +279,8 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Chord ---------- */}
-      <div style={{ marginTop: "20px", minWidth: 0 }}>
-        <SectionHeader color="#B04A24" mutedColor={textMutedColor}>
+      <div style={{ marginTop: "28px", minWidth: 0 }}>
+        <SectionHeader color="#B04A24" mutedColor={textMutedColor} icon={Music}>
           Chord
         </SectionHeader>
         {renderRow(
@@ -411,8 +411,8 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Lyrics ---------- */}
-      <div style={{ marginTop: "20px", minWidth: 0 }}>
-        <SectionHeader color="#534AB7" mutedColor={textMutedColor}>
+      <div style={{ marginTop: "28px", minWidth: 0 }}>
+        <SectionHeader color="#534AB7" mutedColor={textMutedColor} icon={Mic2}>
           Lyrics
         </SectionHeader>
         {renderRow(
@@ -430,8 +430,8 @@ export default function TypographyControls(props) {
       </div>
 
       {/* ---------- Labels ---------- */}
-      <div style={{ marginTop: "20px", minWidth: 0 }}>
-        <SectionHeader color="#2E9E4F" mutedColor={textMutedColor}>
+      <div style={{ marginTop: "28px", minWidth: 0 }}>
+        <SectionHeader color="#2E9E4F" mutedColor={textMutedColor} icon={Tag}>
           Labels
         </SectionHeader>
         {renderRow(

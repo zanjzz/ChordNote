@@ -20,6 +20,7 @@ ChordNote is the ultimate tool for musicians, songwriters, and worship leaders. 
 - **📝 Lyrics & Chords Editor** – Dual-panel interface for writing lyrics and adding chords simultaneously.
 - **📊 Multiple Notations** – Switch between standard letters, **Nashville Numbers** (1, 4, 5), and **Roman numerals** (I, IV, V).
 - **🔗 Shareable Links** – Generate compressed share URLs to send your charts to anyone.
+- **🌐 URL Import** – Paste a song link from a supported chord site (or plain chord text) and import it automatically. Powered by a Cloudflare Pages Function with modular, per-site parsers.
 - **🖨️ Preview & Export** – Export and download your own customized charts to JPEG/PNG/PDF.
 - **💾 Auto-Save & Library** – Your work auto-saves to local storage. Save your work to a built-in library.
 

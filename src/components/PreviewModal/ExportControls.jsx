@@ -1,12 +1,13 @@
 // src/components/PreviewModal/ExportControls.jsx
 import React from "react";
-import { Image, FileText, Loader2 } from "lucide-react";
+import { Image, FileText, Loader2, Download, Printer } from "lucide-react";
 import SectionHeader from "./SectionHeader.jsx";
 
 export default function ExportControls({
   exporting,
   handleExport,
   handlePDFExport,
+  handlePrint,
   pageRanges,
   textMutedColor,
   borderColor,
@@ -48,6 +49,7 @@ export default function ExportControls({
         color="#C2410C"
         mutedColor={textMutedColor}
         fontSize="13px"
+        icon={Download}
       >
         Export {pageRanges.length > 1 ? `(${pageRanges.length} pages)` : "as"}
       </SectionHeader>
@@ -95,6 +97,24 @@ export default function ExportControls({
           PDF
         </button>
       </div>
+
+      {/* Print is a distinct action (not a file format), so it gets its own
+          full-width button below the download formats. */}
+      <button
+        onClick={handlePrint}
+        disabled={!!exporting}
+        style={{
+          ...exportBtnStyle(exporting === "print"),
+          marginTop: "2px",
+        }}
+      >
+        {exporting === "print" ? (
+          <Loader2 size={16} className="chord-spin" />
+        ) : (
+          <Printer size={16} />
+        )}{" "}
+        Print
+      </button>
     </div>
   );
 }

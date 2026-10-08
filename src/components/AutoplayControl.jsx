@@ -11,6 +11,32 @@ function contrastColor(hexColor) {
   return brightness > 140 ? "#22221F" : "#FFFFFF";
 }
 
+// Size presets. "sm" is the compact panel header size (unchanged); "lg"
+// matches the larger tool buttons on the full-page view so the autoplay
+// control sits balanced next to the theme toggle and font stepper.
+const SIZES = {
+  sm: {
+    play: 26,
+    playIcon: 13,
+    step: 20,
+    stepIcon: 11,
+    label: 10,
+    labelWidth: 34,
+    radius: 6,
+    gap: 6,
+  },
+  lg: {
+    play: 38,
+    playIcon: 17,
+    step: 30,
+    stepIcon: 14,
+    label: 12,
+    labelWidth: 42,
+    radius: 8,
+    gap: 8,
+  },
+};
+
 export default function AutoplayControl({
   theme,
   chordColor,
@@ -21,9 +47,12 @@ export default function AutoplayControl({
   onDecreaseSpeed,
   canIncrease,
   canDecrease,
+  size = "sm",
 }) {
+  const s = SIZES[size] || SIZES.sm;
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: `${s.gap}px` }}>
       <button
         onClick={onToggle}
         title={isPlaying ? "Pause autoplay" : "Start autoplay"}
@@ -33,10 +62,10 @@ export default function AutoplayControl({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          width: "26px",
-          height: "26px",
+          width: `${s.play}px`,
+          height: `${s.play}px`,
           flexShrink: 0,
-          borderRadius: "6px",
+          borderRadius: `${s.radius}px`,
           border: `1px solid ${isPlaying ? chordColor : theme.border}`,
           background: isPlaying ? chordColor : theme.panel,
           color: isPlaying ? contrastColor(chordColor) : theme.textSecondary,
@@ -44,7 +73,7 @@ export default function AutoplayControl({
           transition: "background 0.15s ease, border-color 0.15s ease",
         }}
       >
-        {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+        {isPlaying ? <Pause size={s.playIcon} /> : <Play size={s.playIcon} />}
       </button>
 
       <div
@@ -53,9 +82,11 @@ export default function AutoplayControl({
           alignItems: "center",
           gap: "2px",
           border: `1px solid ${theme.border}`,
-          borderRadius: "6px",
-          padding: "2px",
+          borderRadius: `${s.radius}px`,
+          padding: "3px",
           background: theme.panel,
+          height: `${s.play}px`,
+          boxSizing: "border-box",
         }}
         title="Autoplay speed"
       >
@@ -68,24 +99,24 @@ export default function AutoplayControl({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "20px",
-            height: "20px",
+            width: `${s.step}px`,
+            height: `${s.step}px`,
             border: "none",
-            borderRadius: "4px",
+            borderRadius: `${s.radius - 2}px`,
             background: "transparent",
             color: canDecrease ? theme.textSecondary : theme.textMuted,
             cursor: canDecrease ? "pointer" : "default",
             opacity: canDecrease ? 1 : 0.4,
           }}
         >
-          <Minus size={11} />
+          <Minus size={s.stepIcon} />
         </button>
         <span
           style={{
-            fontSize: "10px",
+            fontSize: `${s.label}px`,
             fontWeight: 600,
             color: theme.textMuted,
-            minWidth: "34px",
+            minWidth: `${s.labelWidth}px`,
             textAlign: "center",
             fontVariantNumeric: "tabular-nums",
           }}
@@ -101,17 +132,17 @@ export default function AutoplayControl({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "20px",
-            height: "20px",
+            width: `${s.step}px`,
+            height: `${s.step}px`,
             border: "none",
-            borderRadius: "4px",
+            borderRadius: `${s.radius - 2}px`,
             background: "transparent",
             color: canIncrease ? theme.textSecondary : theme.textMuted,
             cursor: canIncrease ? "pointer" : "default",
             opacity: canIncrease ? 1 : 0.4,
           }}
         >
-          <Plus size={11} />
+          <Plus size={s.stepIcon} />
         </button>
       </div>
     </div>

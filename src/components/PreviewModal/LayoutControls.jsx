@@ -22,7 +22,7 @@ export default function LayoutControls({
 
   return (
     <div style={{ minWidth: 0 }}>
-      <SectionHeader color="#0F6E56" mutedColor={textMutedColor}>
+      <SectionHeader color="#0F6E56" mutedColor={textMutedColor} icon={Columns}>
         Layout
       </SectionHeader>
       <div

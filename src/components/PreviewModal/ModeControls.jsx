@@ -18,7 +18,7 @@ export default function ModeControls({
 
   return (
     <div style={{ minWidth: 0 }}>
-      <SectionHeader color="#993556" mutedColor={textMutedColor}>
+      <SectionHeader color="#993556" mutedColor={textMutedColor} icon={Music2}>
         Mode
       </SectionHeader>
       <button

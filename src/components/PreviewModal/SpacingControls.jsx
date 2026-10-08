@@ -1,5 +1,5 @@
 import React from "react";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Ruler } from "lucide-react";
 import StepBtn from "../StepBtn.jsx";
 import SectionHeader from "./SectionHeader.jsx";
 
@@ -122,7 +122,7 @@ export default function SpacingControls({
 
   return (
     <div style={{ minWidth: 0 }}>
-      <SectionHeader color="#993556" mutedColor={textMutedColor}>
+      <SectionHeader color="#993556" mutedColor={textMutedColor} icon={Ruler}>
         Spacing
       </SectionHeader>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
