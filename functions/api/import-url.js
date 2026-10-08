@@ -45,7 +45,7 @@ function isDisallowedHost(hostname) {
   return false;
 }
 
-export async function onRequestPost({ request }) {
+async function handleImport(request) {
   let payload;
   try {
     payload = await request.json();
@@ -170,4 +170,31 @@ export async function onRequestPost({ request }) {
       500,
     );
   }
+}
+
+// Single entry point for the route. We handle the method ourselves rather
+// than relying on onRequestPost, which proved fragile in production (405s).
+// POST does the import; OPTIONS answers any CORS preflight; everything else
+// gets a clean 405.
+export async function onRequest(context) {
+  const { request } = context;
+  const method = request.method.toUpperCase();
+
+  if (method === "POST") {
+    return handleImport(request);
+  }
+
+  if (method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "POST, OPTIONS",
+        "access-control-allow-headers": "content-type",
+        "access-control-max-age": "86400",
+      },
+    });
+  }
+
+  return fail("INVALID_REQUEST", "Use POST to import a URL.", 405);
 }
