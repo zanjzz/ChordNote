@@ -274,7 +274,7 @@ export default function ChordImporter({
 }) {
   // Two separate inputs, each with its own value, so pasting text and
   // pasting a link are visually and behaviorally distinct.
-  const [mode, setMode] = useState("text"); // "text" | "link"
+  const [mode, setMode] = useState("link"); // "link" | "text" — link first
   const [textInput, setTextInput] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [error, setError] = useState("");
@@ -310,6 +310,9 @@ export default function ChordImporter({
       detectedMode: result.detectedMode,
       ...(meta.title ? { title: meta.title } : {}),
       ...(meta.author ? { author: meta.author } : {}),
+      ...(meta.musicKey ? { musicKey: meta.musicKey } : {}),
+      ...(meta.capo ? { capo: meta.capo } : {}),
+      ...(meta.bpm ? { bpm: meta.bpm } : {}),
     });
     onClose();
     return true;
@@ -320,9 +323,13 @@ export default function ChordImporter({
       setError("Paste a chord sheet first, then press Import.");
       return;
     }
-    // If it's ChordPro, lift {title}/{artist} directives into the meta too.
+    // If it's ChordPro, lift {title}/{artist}/{key} directives into meta too.
     const meta = isChordPro(textInput) ? extractChordProMeta(textInput) : {};
-    finishWithText(textInput, { title: meta.title, author: meta.artist });
+    finishWithText(textInput, {
+      title: meta.title,
+      author: meta.artist,
+      musicKey: meta.key,
+    });
   };
 
   const handleUrlImport = async () => {
@@ -352,6 +359,9 @@ export default function ChordImporter({
       finishWithText(song.chartText, {
         title: song.title,
         author: song.artist,
+        musicKey: song.musicKey,
+        capo: song.capo,
+        bpm: song.bpm,
       });
     } catch (err) {
       if (!isMountedRef.current) return;
@@ -419,8 +429,8 @@ export default function ChordImporter({
           }}
         >
           {[
-            { id: "text", label: "Paste Text" },
             { id: "link", label: "From Link" },
+            { id: "text", label: "Paste Text" },
           ].map((tab) => {
             const active = mode === tab.id;
             return (

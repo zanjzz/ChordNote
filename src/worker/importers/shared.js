@@ -160,8 +160,16 @@ export function normalizeSectionLabels(text = "") {
 }
 
 /** A consistent shape so callers never deal with undefined fields. */
-export function makeSong({ title = "", artist = "", sections = [], chordChart = "" }) {
-  return { title, artist, sections, chordChart };
+export function makeSong({
+  title = "",
+  artist = "",
+  sections = [],
+  chordChart = "",
+  musicKey = "",
+  capo = "",
+  bpm = "",
+}) {
+  return { title, artist, sections, chordChart, musicKey, capo, bpm };
 }
 
 /** Thrown by importers to signal a specific, user-friendly failure. */

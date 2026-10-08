@@ -41,19 +41,21 @@ export function parseHtml(hostname, html) {
   let chart = song.chordChart || "";
   let title = song.title || "";
   let artist = song.artist || "";
+  let musicKey = song.musicKey || "";
 
   // If the fetched chart is ChordPro, convert it to the two-line format
-  // and lift any {title}/{artist} directives when the importer didn't
-  // already find them.
+  // and lift any {title}/{artist}/{key} directives when the importer
+  // didn't already find them.
   if (isChordPro(chart)) {
     const meta = extractChordProMeta(chart);
     if (!title && meta.title) title = meta.title;
     if (!artist && meta.artist) artist = meta.artist;
+    if (!musicKey && meta.key) musicKey = meta.key;
     chart = convertChordPro(chart);
   }
 
   // Always normalize section labels to consistent [brackets].
   chart = normalizeSectionLabels(chart);
 
-  return { ...song, title, artist, chordChart: chart };
+  return { ...song, title, artist, musicKey, chordChart: chart };
 }

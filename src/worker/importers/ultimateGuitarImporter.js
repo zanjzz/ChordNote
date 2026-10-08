@@ -63,10 +63,24 @@ export function parse(html) {
 
   const chordChart = normalizeChart(stripUGMarkup(decodeEntities(content)));
 
+  // UG exposes the key as `tonality_name` (e.g. "G", "Am"), and sometimes
+  // a capo and tempo. Capo may be a number of frets; normalize to a string.
+  const musicKey = meta.tonality_name || meta.tonality || "";
+  const capoRaw = page.capo ?? meta.capo ?? tabView.capo;
+  const capo =
+    capoRaw != null && capoRaw !== "" && Number(capoRaw) > 0
+      ? String(capoRaw)
+      : "";
+  const bpmRaw = page.tempo ?? meta.tempo ?? tabView.bpm;
+  const bpm = bpmRaw != null && bpmRaw !== "" ? String(bpmRaw) : "";
+
   return makeSong({
     title: meta.song_name || "",
     artist: meta.artist_name || "",
     chordChart,
+    musicKey,
+    capo,
+    bpm,
   });
 }
 

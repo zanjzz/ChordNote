@@ -101,6 +101,9 @@ export async function importFromUrl(url) {
     title: data.title || "",
     artist: data.artist || "",
     sections: data.sections || [],
+    musicKey: data.musicKey || "",
+    capo: data.capo || "",
+    bpm: data.bpm || "",
     chartText: songToChartText(data),
   };
 }

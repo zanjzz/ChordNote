@@ -460,10 +460,15 @@ export default function ChordSheetEditor({ onGoHome }) {
     if (data.detectedMode) {
       setChordDisplayMode(data.detectedMode);
     }
-    // URL imports can carry title/artist; only overwrite when provided
-    // and non-empty so a plain text paste never clears existing fields.
+    // Imports can carry metadata (title/artist/key/capo/bpm); only overwrite
+    // when provided and non-empty so a plain text paste never clears
+    // existing fields. The key goes through handleKeyChange so the sharp/
+    // flat toggle updates to match the imported key.
     if (data.title) setTitle(data.title);
     if (data.author) setAuthor(data.author);
+    if (data.musicKey) handleKeyChange(data.musicKey);
+    if (data.capo) setCapo(data.capo);
+    if (data.bpm) setBpm(data.bpm);
   };
 
   // ---- Clear function ----
