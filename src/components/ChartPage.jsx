@@ -13,6 +13,8 @@ import { useAutoScroll } from "../hooks/useAutoScroll";
 import AutoplayControl from "./AutoplayControl";
 import whiteLogo from "../assets/default-monochrome-white.svg";
 import darkLogo from "../assets/default-monochrome-black.svg";
+import iconWhite from "../assets/icon_white.svg";
+import iconBlack from "../assets/icon_black.svg";
 
 // ── Design tokens (matches the existing app theme system) ──────────────────
 
@@ -43,7 +45,7 @@ const MONO_FONT = "'JetBrains Mono', 'Courier New', Courier, monospace";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
-function IconBtn({ onClick, disabled, colors, children }) {
+function IconBtn({ onClick, disabled, colors, children, dim = 30 }) {
   return (
     <button
       onClick={onClick}
@@ -52,8 +54,8 @@ function IconBtn({ onClick, disabled, colors, children }) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: "30px",
-        height: "30px",
+        width: `${dim}px`,
+        height: `${dim}px`,
         border: "none",
         borderRadius: "6px",
         background: "transparent",
@@ -147,6 +149,16 @@ export default function ChartPage({ song, mode }) {
   const [darkMode, setDarkMode] = useState(initialDarkMode);
   const [fontSize, setFontSize] = useState(Math.max(editorFontSize, 14));
 
+  // Track a narrow viewport so the navbar controls shrink to fit phones.
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 600 : false,
+  );
+  useEffect(() => {
+    const onResize = () => setIsNarrow(window.innerWidth <= 600);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   const colors = darkMode ? DARK : LIGHT;
   const lines = useMemo(() => lyrics.split("\n"), [lyrics]);
 
@@ -193,10 +205,13 @@ export default function ChartPage({ song, mode }) {
       }}
     >
       <style>{`
-        @media (max-width: 560px) {
+        /* Full wordmark on wider screens, compact icon on phones. */
+        .chartpage-logo-icon { display: none; }
+        @media (max-width: 600px) {
           .chartpage-navbar { padding: 8px 12px !important; gap: 8px !important; }
           .chartpage-tools { gap: 6px !important; }
-          .chartpage-navbar img { width: 88px !important; }
+          .chartpage-logo-full { display: none !important; }
+          .chartpage-logo-icon { display: block !important; }
         }
       `}</style>
 
@@ -220,16 +235,23 @@ export default function ChartPage({ song, mode }) {
           boxSizing: "border-box",
         }}
       >
-        {/* Left: logo */}
+        {/* Left: logo — full wordmark on desktop, icon-only on mobile */}
         <a
           href={`${window.location.origin}${window.location.pathname}?editor=true`}
           title="Open ChordNote editor"
           style={{ display: "flex", alignItems: "center", flexShrink: 0 }}
         >
           <img
+            className="chartpage-logo-full"
             src={darkMode ? darkLogo : whiteLogo}
             alt="ChordNote"
             style={{ width: "104px", height: "auto", display: "block" }}
+          />
+          <img
+            className="chartpage-logo-icon"
+            src={darkMode ? iconBlack : iconWhite}
+            alt="ChordNote"
+            style={{ width: "30px", height: "30px", display: "none" }}
           />
         </a>
 
@@ -261,15 +283,16 @@ export default function ChartPage({ song, mode }) {
               onClick={() => adjustFont(-1)}
               disabled={fontSize <= 12}
               colors={colors}
+              dim={isNarrow ? 26 : 30}
             >
-              <Minus size={16} />
+              <Minus size={isNarrow ? 14 : 16} />
             </IconBtn>
             <span
               style={{
-                fontSize: "13px",
+                fontSize: isNarrow ? "12px" : "13px",
                 fontWeight: 600,
                 color: colors.textMuted,
-                minWidth: "28px",
+                minWidth: isNarrow ? "22px" : "28px",
                 textAlign: "center",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -280,8 +303,9 @@ export default function ChartPage({ song, mode }) {
               onClick={() => adjustFont(1)}
               disabled={fontSize >= 40}
               colors={colors}
+              dim={isNarrow ? 26 : 30}
             >
-              <Plus size={16} />
+              <Plus size={isNarrow ? 14 : 16} />
             </IconBtn>
           </div>
 
@@ -293,8 +317,8 @@ export default function ChartPage({ song, mode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "38px",
-              height: "38px",
+              width: isNarrow ? "32px" : "38px",
+              height: isNarrow ? "32px" : "38px",
               flexShrink: 0,
               borderRadius: "8px",
               border: `1px solid ${colors.border}`,
@@ -303,12 +327,12 @@ export default function ChartPage({ song, mode }) {
               cursor: "pointer",
             }}
           >
-            {darkMode ? <Sun size={17} /> : <Moon size={17} />}
+            {darkMode ? <Sun size={isNarrow ? 15 : 17} /> : <Moon size={isNarrow ? 15 : 17} />}
           </button>
 
           {/* Autoplay control (reuses existing component) */}
           <AutoplayControl
-            size="lg"
+            size={isNarrow ? "sm" : "lg"}
             theme={{
               border: colors.border,
               panel: darkMode ? "#1A1A17" : "#FFFFFF",
