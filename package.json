@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:functions": "npm run build && wrangler pages dev dist",
+    "dev:worker": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",

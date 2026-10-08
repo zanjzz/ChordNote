@@ -1,13 +1,10 @@
-// functions/api/import-url.js
+// src/worker/importUrlHandler.js
 //
-// Cloudflare Pages Function — POST /api/import-url
-// Body: { "url": "https://..." }
-// Returns: { title, artist, sections, chordChart }  (200)
-//      or: { error, code }                           (4xx/5xx)
-//
-// Fetches the target page server-side (no browser CORS limits), then routes
-// its HTML through the importer factory. All failure modes map to a stable
-// `code` the client turns into a friendly message.
+// The URL-import request handler, as a plain function returning a Response.
+// Moved out of the old Pages Function (functions/api/import-url.js) so it
+// can run inside the Worker's fetch handler. The logic is byte-for-byte the
+// same — fetch the target page server-side, route its HTML through the
+// importer factory, map failures to stable { error, code } JSON.
 
 import { parseHtml } from "./importers/importerFactory.js";
 import { ImportError } from "./importers/shared.js";
@@ -45,7 +42,11 @@ function isDisallowedHost(hostname) {
   return false;
 }
 
-async function handleImport(request) {
+/**
+ * Handle a POST to /api/import-url. `request` is the Fetch API Request.
+ * Returns a Response.
+ */
+export async function handleImportUrl(request) {
   let payload;
   try {
     payload = await request.json();
@@ -101,11 +102,7 @@ async function handleImport(request) {
 
     const contentType = res.headers.get("content-type") || "";
     if (!/text\/html|application\/xhtml/i.test(contentType)) {
-      return fail(
-        "UNSUPPORTED",
-        "That link isn't a web page we can read.",
-        415,
-      );
+      return fail("UNSUPPORTED", "That link isn't a web page we can read.", 415);
     }
 
     // Read with a size cap.
@@ -152,17 +149,12 @@ async function handleImport(request) {
   try {
     const song = parseHtml(url.hostname, html);
     if (!song.chordChart || !song.chordChart.trim()) {
-      return fail(
-        "NO_CHORD_DATA",
-        "No chord data was found on that page.",
-        422,
-      );
+      return fail("NO_CHORD_DATA", "No chord data was found on that page.", 422);
     }
     return json(song, 200);
   } catch (err) {
     if (err instanceof ImportError) {
-      const status = err.code === "NO_CHORD_DATA" ? 422 : 422;
-      return fail(err.code, err.message, status);
+      return fail(err.code, err.message, 422);
     }
     return fail(
       "PARSE_FAILED",
@@ -172,29 +164,20 @@ async function handleImport(request) {
   }
 }
 
-// Single entry point for the route. We handle the method ourselves rather
-// than relying on onRequestPost, which proved fragile in production (405s).
-// POST does the import; OPTIONS answers any CORS preflight; everything else
-// gets a clean 405.
-export async function onRequest(context) {
-  const { request } = context;
-  const method = request.method.toUpperCase();
+/** CORS preflight response for the API route. */
+export function corsPreflight() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "access-control-allow-origin": "*",
+      "access-control-allow-methods": "POST, OPTIONS",
+      "access-control-allow-headers": "content-type",
+      "access-control-max-age": "86400",
+    },
+  });
+}
 
-  if (method === "POST") {
-    return handleImport(request);
-  }
-
-  if (method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "POST, OPTIONS",
-        "access-control-allow-headers": "content-type",
-        "access-control-max-age": "86400",
-      },
-    });
-  }
-
+/** 405 for unsupported methods on the API route. */
+export function methodNotAllowed() {
   return fail("INVALID_REQUEST", "Use POST to import a URL.", 405);
 }

@@ -7,11 +7,7 @@
 import ultimateGuitar from "./ultimateGuitarImporter.js";
 import generic from "./genericImporter.js";
 import { normalizeSectionLabels } from "./shared.js";
-import {
-  isChordPro,
-  convertChordPro,
-  extractChordProMeta,
-} from "./chordpro.js";
+import { isChordPro, convertChordPro, extractChordProMeta } from "./chordpro.js";
 
 // Dedicated, domain-specific importers, checked in order. The generic
 // importer is always the final fallback and is NOT in this list.

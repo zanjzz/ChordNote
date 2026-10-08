@@ -1,0 +1,12 @@
+name = "chordnote"
+main = "src/worker/index.js"
+compatibility_date = "2024-11-01"
+
+# Serve the Vite build output as static assets. The Worker (src/worker/index.js)
+# runs first for every request; anything it doesn't handle (i.e. not /api/*)
+# falls through to these assets. SPA fallback serves index.html for client
+# routes so deep links work.
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
