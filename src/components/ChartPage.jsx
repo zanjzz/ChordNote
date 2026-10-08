@@ -149,16 +149,6 @@ export default function ChartPage({ song, mode }) {
   const [darkMode, setDarkMode] = useState(initialDarkMode);
   const [fontSize, setFontSize] = useState(Math.max(editorFontSize, 14));
 
-  // Track a narrow viewport so the navbar controls shrink to fit phones.
-  const [isNarrow, setIsNarrow] = useState(
-    typeof window !== "undefined" ? window.innerWidth <= 600 : false,
-  );
-  useEffect(() => {
-    const onResize = () => setIsNarrow(window.innerWidth <= 600);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
   const colors = darkMode ? DARK : LIGHT;
   const lines = useMemo(() => lyrics.split("\n"), [lyrics]);
 
@@ -213,6 +203,12 @@ export default function ChartPage({ song, mode }) {
           .chartpage-logo-full { display: none !important; }
           .chartpage-logo-icon { display: block !important; }
         }
+        /* On very narrow phones, if the controls still can't fit beside the
+           icon, let them drop to a second row rather than overflow/clip. */
+        @media (max-width: 380px) {
+          .chartpage-navbar { flex-wrap: wrap !important; }
+          .chartpage-tools { width: 100%; justify-content: flex-end; }
+        }
       `}</style>
 
       {/* ── Top bar — stays fixed above the scrolling content ───────────── */}
@@ -249,7 +245,7 @@ export default function ChartPage({ song, mode }) {
           />
           <img
             className="chartpage-logo-icon"
-            src={darkMode ? iconBlack : iconWhite}
+            src={darkMode ? iconWhite : iconBlack}
             alt="ChordNote"
             style={{ width: "30px", height: "30px", display: "none" }}
           />
@@ -283,16 +279,15 @@ export default function ChartPage({ song, mode }) {
               onClick={() => adjustFont(-1)}
               disabled={fontSize <= 12}
               colors={colors}
-              dim={isNarrow ? 26 : 30}
             >
-              <Minus size={isNarrow ? 14 : 16} />
+              <Minus size={16} />
             </IconBtn>
             <span
               style={{
-                fontSize: isNarrow ? "12px" : "13px",
+                fontSize: "13px",
                 fontWeight: 600,
                 color: colors.textMuted,
-                minWidth: isNarrow ? "22px" : "28px",
+                minWidth: "28px",
                 textAlign: "center",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -303,9 +298,8 @@ export default function ChartPage({ song, mode }) {
               onClick={() => adjustFont(1)}
               disabled={fontSize >= 40}
               colors={colors}
-              dim={isNarrow ? 26 : 30}
             >
-              <Plus size={isNarrow ? 14 : 16} />
+              <Plus size={16} />
             </IconBtn>
           </div>
 
@@ -317,8 +311,8 @@ export default function ChartPage({ song, mode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: isNarrow ? "32px" : "38px",
-              height: isNarrow ? "32px" : "38px",
+              width: "38px",
+              height: "38px",
               flexShrink: 0,
               borderRadius: "8px",
               border: `1px solid ${colors.border}`,
@@ -327,12 +321,12 @@ export default function ChartPage({ song, mode }) {
               cursor: "pointer",
             }}
           >
-            {darkMode ? <Sun size={isNarrow ? 15 : 17} /> : <Moon size={isNarrow ? 15 : 17} />}
+            {darkMode ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
           {/* Autoplay control (reuses existing component) */}
           <AutoplayControl
-            size={isNarrow ? "sm" : "lg"}
+            size="lg"
             theme={{
               border: colors.border,
               panel: darkMode ? "#1A1A17" : "#FFFFFF",
