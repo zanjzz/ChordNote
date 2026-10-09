@@ -7,6 +7,7 @@ import {
   Copy,
   Check,
   ChevronDown,
+  Plus,
 } from "lucide-react";
 
 // ---- Constants & Themes ----
@@ -67,6 +68,216 @@ const readSavedSongsFromStorage = () => {
 };
 
 // ============================================================
+// MOBILE ACTION BAR (shown inside each panel on mobile ≤768px)
+// ============================================================
+function MobileActionBar({
+  theme,
+  chordColor,
+  hoveredBtn,
+  setHoveredBtn,
+  onImport,
+  onShare,
+  copyMenuRef,
+  showCopyMenu,
+  setShowCopyMenu,
+  copyFeedback,
+  handleCopy,
+  onPreview,
+}) {
+  const accentTextColor = (() => {
+    const hex = (chordColor || "#0F6E56").replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 140 ? "#22221F" : "#FFFFFF";
+  })();
+
+  const btnBase = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    borderRadius: "8px",
+    padding: "11px 10px",
+    fontSize: "13px",
+    fontWeight: 600,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    transition: "border-color 0.15s ease",
+    width: "100%",
+  };
+
+  return (
+    <div>
+      {/* 2×2 grid of action buttons */}
+      <div
+        className="chord-mobile-action-bar chord-action-bar"
+        style={{ marginTop: "14px" }}
+      >
+        <button
+          onClick={onImport}
+          onMouseEnter={() => setHoveredBtn("import-m")}
+          onMouseLeave={() => setHoveredBtn(null)}
+          style={{
+            ...btnBase,
+            background: "transparent",
+            color: theme.text,
+            border: `1px solid ${hoveredBtn === "import-m" ? chordColor : theme.border}`,
+          }}
+        >
+          <FileText size={15} /> Import
+        </button>
+
+        <button
+          onClick={onShare}
+          onMouseEnter={() => setHoveredBtn("share-m")}
+          onMouseLeave={() => setHoveredBtn(null)}
+          style={{
+            ...btnBase,
+            background: "transparent",
+            color: theme.text,
+            border: `1px solid ${hoveredBtn === "share-m" ? chordColor : theme.border}`,
+          }}
+        >
+          <Share2 size={15} /> Share
+        </button>
+
+        <button
+          ref={copyMenuRef}
+          onClick={() => setShowCopyMenu((v) => !v)}
+          onMouseEnter={() => setHoveredBtn("copy-m")}
+          onMouseLeave={() => setHoveredBtn(null)}
+          style={{
+            ...btnBase,
+            position: "relative",
+            background: "transparent",
+            color: theme.text,
+            border: `1px solid ${hoveredBtn === "copy-m" ? chordColor : theme.border}`,
+          }}
+        >
+          {copyFeedback ? (
+            <Check size={15} color={chordColor} />
+          ) : (
+            <Copy size={15} />
+          )}
+          {copyFeedback ? "Copied!" : "Copy"}
+          <ChevronDown
+            size={13}
+            style={{
+              transform: showCopyMenu ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.15s ease",
+            }}
+          />
+          {showCopyMenu && (
+            <div
+              className="chord-copy-menu"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: "absolute",
+                bottom: "calc(100% + 10px)",
+                left: 0,
+                width: "100%",
+                boxSizing: "border-box",
+                background: theme.panel,
+                border: `1px solid ${theme.border}`,
+                borderRadius: "12px",
+                boxShadow: "0 10px 28px rgba(0,0,0,0.18)",
+                padding: "6px",
+                zIndex: 10,
+                animation: "slideUp 0.18s ease",
+              }}
+            >
+              <button
+                onClick={() => handleCopy("lyrics")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "9px 10px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: theme.text,
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = theme.borderSoft)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "transparent")
+                }
+              >
+                <FileText size={14} color={theme.textMuted} /> Lyrics only
+              </button>
+              <button
+                onClick={() => handleCopy("full")}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  width: "100%",
+                  textAlign: "left",
+                  padding: "9px 10px",
+                  fontSize: "13px",
+                  fontWeight: 500,
+                  color: theme.text,
+                  background: "transparent",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = theme.borderSoft)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "transparent")
+                }
+              >
+                <Copy size={14} color={theme.textMuted} /> Lyrics + chords
+              </button>
+            </div>
+          )}
+        </button>
+
+        <button
+          onClick={onPreview}
+          onMouseEnter={() => setHoveredBtn("preview-m")}
+          onMouseLeave={() => setHoveredBtn(null)}
+          style={{
+            ...btnBase,
+            background: chordColor,
+            color: accentTextColor,
+            border: `1px solid ${hoveredBtn === "preview-m" ? theme.text : chordColor}`,
+          }}
+        >
+          <Printer size={15} style={{ flexShrink: 0 }} /> Export
+        </button>
+      </div>
+
+      {/* Hint note */}
+      <p
+        className="chord-mobile-action-note"
+        style={{
+          margin: "10px 0 0",
+          fontSize: "11px",
+          color: theme.textMuted,
+          lineHeight: 1.5,
+          textAlign: "center",
+        }}
+      >
+        Use the <strong>Lyrics</strong> tab to write your song and add sections.
+        Switch to <strong>Chords</strong> to add chord annotations above each
+        line. Import fetches a full chart from a URL.
+      </p>
+    </div>
+  );
+}
+
+// ============================================================
 // MAIN COMPONENT
 // ============================================================
 export default function ChordSheetEditor({ onGoHome }) {
@@ -112,6 +323,7 @@ export default function ChordSheetEditor({ onGoHome }) {
           showLineNumbers: decoded.showLineNumbers ?? false,
           chordDisplayMode: decoded.chordDisplayMode || "letters",
           accidentalPreference: decoded.accidentalPreference || "sharp",
+          jumpKeys: decoded.jumpKeys || {},
         };
       } catch (_) {}
     }
@@ -141,6 +353,7 @@ export default function ChordSheetEditor({ onGoHome }) {
       showLineNumbers: false,
       chordDisplayMode: "letters",
       accidentalPreference: "sharp",
+      jumpKeys: {},
     };
   };
 
@@ -164,6 +377,8 @@ export default function ChordSheetEditor({ onGoHome }) {
   );
   const [showPreview, setShowPreview] = useState(false);
   const [showImporter, setShowImporter] = useState(false);
+  // Mobile-only tab: which panel is currently visible ("lyrics" | "chords")
+  const [activeMobilePanel, setActiveMobilePanel] = useState("lyrics");
   const [showSavedSongs, setShowSavedSongs] = useState(false);
   const [fontSize, setFontSize] = useState(15);
   const [columns, setColumns] = useState(initialState.columns);
@@ -178,6 +393,8 @@ export default function ChordSheetEditor({ onGoHome }) {
   const [accidentalPreference, setAccidentalPreference] = useState(
     initialState.accidentalPreference || "sharp",
   );
+  // Section → shortcut-key map for the full-page view's jump feature.
+  const [jumpKeys, setJumpKeys] = useState(initialState.jumpKeys || {});
   const [savedSongs, setSavedSongs] = useState(readSavedSongsFromStorage);
   const [copyFeedback, setCopyFeedback] = useState(null);
 
@@ -245,6 +462,7 @@ export default function ChordSheetEditor({ onGoHome }) {
       showLineNumbers,
       chordDisplayMode,
       accidentalPreference,
+      jumpKeys,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [
@@ -264,6 +482,7 @@ export default function ChordSheetEditor({ onGoHome }) {
     showLineNumbers,
     chordDisplayMode,
     accidentalPreference,
+    jumpKeys,
   ]);
 
   useEffect(() => {
@@ -469,6 +688,9 @@ export default function ChordSheetEditor({ onGoHome }) {
     if (data.musicKey) handleKeyChange(data.musicKey);
     if (data.capo) setCapo(data.capo);
     if (data.bpm) setBpm(data.bpm);
+    // On mobile, automatically switch to the chords panel so the user
+    // can immediately see the imported chart without having to scroll.
+    setActiveMobilePanel("chords");
   };
 
   // ---- Clear function ----
@@ -586,6 +808,7 @@ export default function ChordSheetEditor({ onGoHome }) {
       editorFontSize: editorFontSize || 15,
       transposeOffset: transposeOffset || 0,
       accidentalPreference: accidentalPreference || "sharp",
+      jumpKeys: jumpKeys || {},
     };
 
     setSavedSongs((prev) => {
@@ -648,6 +871,7 @@ export default function ChordSheetEditor({ onGoHome }) {
     setEditorFontSize(song.editorFontSize || 15);
     setTransposeOffset(song.transposeOffset || 0);
     setAccidentalPreference(song.accidentalPreference || "sharp");
+    setJumpKeys(song.jumpKeys || {});
     prevLinesRef.current = (song.lyrics || "").split("\n");
     clearedBackupRef.current = null;
   };
@@ -686,6 +910,7 @@ export default function ChordSheetEditor({ onGoHome }) {
       showLineNumbers,
       chordDisplayMode,
       accidentalPreference,
+      jumpKeys,
     };
     const encoded = encodeShareData(dataToShare);
     const shareUrl = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
@@ -735,6 +960,7 @@ export default function ChordSheetEditor({ onGoHome }) {
       showLineNumbers,
       chordDisplayMode,
       accidentalPreference,
+      jumpKeys,
     };
     const encoded = encodeShareData(dataToEncode);
     const url = `${window.location.origin}${window.location.pathname}?view=${mode}&data=${encoded}`;
@@ -856,6 +1082,48 @@ export default function ChordSheetEditor({ onGoHome }) {
             gap: 12px !important;
           }
         }
+
+        /* ---------- MOBILE PANEL TABS ---------- */
+        /* The tab bar and per-panel action bar/note are mobile-only. */
+        .chord-mobile-tabs { display: none; }
+        .chord-mobile-action-bar { display: none; }
+        .chord-mobile-action-note { display: none; }
+        /* The outer wrapper around MobileActionBar — hidden on desktop */
+        .chord-mobile-only { display: none; }
+        /* Desktop action bar always visible; inside .chord-bottom-bar it
+           must NOT have margin-left: auto (that's for the standalone case). */
+        .chord-desktop-action-bar { display: grid; margin-left: 0 !important; width: auto !important; min-width: 0 !important; }
+
+        /* Shared bottom bar: label chips on the left, action buttons on the
+           right, on the same flex row. Mobile hides this and shows chips
+           inside each panel instead. */
+        .chord-bottom-bar {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-top: 10px;
+        }
+        .chord-bottom-bar-chips {
+          flex: 1;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .chord-bottom-bar { display: none !important; }
+        }
+
+        @media (max-width: 768px) {
+          .chord-mobile-tabs { display: flex !important; }
+          .chord-mobile-action-bar { display: grid !important; }
+          .chord-mobile-action-note { display: block !important; }
+          .chord-mobile-only { display: block !important; }
+          .chord-desktop-action-bar { display: none !important; }
+          /* Panel column visibility controlled by active tab */
+          .chord-panel-lyrics-col { display: ${activeMobilePanel === "lyrics" ? "block" : "none"}; }
+          .chord-panel-chords-col { display: ${activeMobilePanel === "chords" ? "block" : "none"}; }
+        }
       `}</style>
 
       <main>
@@ -934,8 +1202,59 @@ export default function ChordSheetEditor({ onGoHome }) {
           setAccidentalPreference={handleAccidentalPreferenceChange}
         />
 
+        {/* Mobile-only panel tab bar */}
+        <div
+          className="chord-mobile-tabs"
+          style={{
+            borderRadius: "10px",
+            border: `1px solid ${theme.border}`,
+            background: theme.panel,
+            overflow: "hidden",
+            marginBottom: "12px",
+          }}
+        >
+          {["lyrics", "chords"].map((tab) => {
+            const active = activeMobilePanel === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveMobilePanel(tab)}
+                style={{
+                  flex: 1,
+                  padding: "11px 0",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  border: "none",
+                  background: active ? chordColor : "transparent",
+                  color: active
+                    ? (() => {
+                        const hex = chordColor.replace("#", "");
+                        const r = parseInt(hex.substring(0, 2), 16);
+                        const g = parseInt(hex.substring(2, 4), 16);
+                        const b = parseInt(hex.substring(4, 6), 16);
+                        return (r * 299 + g * 587 + b * 114) / 1000 > 140
+                          ? "#22221F"
+                          : "#FFFFFF";
+                      })()
+                    : theme.textSecondary,
+                  cursor: "pointer",
+                  transition: "background 0.15s ease, color 0.15s ease",
+                }}
+              >
+                {tab === "lyrics" ? "Lyrics" : "Chords"}
+              </button>
+            );
+          })}
+        </div>
+
         <div className="chord-editor-grid">
-          <div>
+          {/* Lyrics panel — hidden on mobile when chords tab is active */}
+          <div
+            className="chord-panel-lyrics-col"
+            style={undefined}
+          >
             <div
               style={
                 fullscreenPanel === "lyrics"
@@ -973,12 +1292,35 @@ export default function ChordSheetEditor({ onGoHome }) {
                     )
                   }
                   onOpenPage={() => openPageView("lyrics")}
+                  hideDesktopChips
                 />
               </div>
             </div>
+
+            {/* Mobile action bar shown inside lyrics panel */}
+            <div className="chord-mobile-only">
+              <MobileActionBar
+                theme={theme}
+                chordColor={chordColor}
+                hoveredBtn={hoveredBtn}
+                setHoveredBtn={setHoveredBtn}
+                onImport={() => setShowImporter(true)}
+                onShare={handleShare}
+                copyMenuRef={copyMenuRef}
+                showCopyMenu={showCopyMenu}
+                setShowCopyMenu={setShowCopyMenu}
+                copyFeedback={copyFeedback}
+                handleCopy={handleCopy}
+                onPreview={() => setShowPreview(true)}
+              />
+            </div>
           </div>
 
-          <div>
+          {/* Chords panel — hidden on mobile when lyrics tab is active */}
+          <div
+            className="chord-panel-chords-col"
+            style={undefined}
+          >
             <div
               style={
                 fullscreenPanel === "chords"
@@ -1021,16 +1363,63 @@ export default function ChordSheetEditor({ onGoHome }) {
                 />
               </div>
             </div>
+
+            {/* Mobile action bar shown inside chords panel */}
+            <div className="chord-mobile-only">
+              <MobileActionBar
+                theme={theme}
+                chordColor={chordColor}
+                hoveredBtn={hoveredBtn}
+                setHoveredBtn={setHoveredBtn}
+                onImport={() => setShowImporter(true)}
+                onShare={handleShare}
+                copyMenuRef={copyMenuRef}
+                showCopyMenu={showCopyMenu}
+                setShowCopyMenu={setShowCopyMenu}
+                copyFeedback={copyFeedback}
+                handleCopy={handleCopy}
+                onPreview={() => setShowPreview(true)}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Bottom Action Bar */}
-        <div
-          className="chord-action-bar"
-          style={{
-            marginTop: "20px",
-          }}
-        >
+        {/* Bottom bar — desktop only: label chips on the left, action
+            buttons on the right, same row, no extra top margin.
+            On mobile this is hidden; chips + buttons live inside each panel. */}
+        <div className="chord-bottom-bar">
+
+          {/* Label chips (desktop only — mobile sees these inside LyricsPanel) */}
+          <div className="chord-bottom-bar-chips">
+            {SECTION_PRESETS.map((label) => (
+              <button
+                key={label}
+                onClick={() => addSection(label)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "5px 10px",
+                  fontSize: "12px",
+                  borderRadius: "6px",
+                  border: `1px solid ${theme.border}`,
+                  background: theme.panel,
+                  color: theme.textSecondary,
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <Plus size={11} /> {label}
+              </button>
+            ))}
+            {/* Custom — not shown in desktop bottom bar row */}
+          </div>
+
+          {/* Action buttons */}
+          <div
+            className="chord-action-bar chord-desktop-action-bar"
+            style={{ marginTop: 0, flexShrink: 0 }}
+          >
           <button
             onClick={() => setShowImporter(true)}
             onMouseEnter={() => setHoveredBtn("import")}
@@ -1227,6 +1616,7 @@ export default function ChordSheetEditor({ onGoHome }) {
             />{" "}
             Preview & Export
           </button>
+          </div>
         </div>
       </main>
 

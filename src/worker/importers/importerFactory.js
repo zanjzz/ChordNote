@@ -6,7 +6,13 @@
 
 import ultimateGuitar from "./ultimateGuitarImporter.js";
 import generic from "./genericImporter.js";
-import { normalizeSectionLabels } from "./shared.js";
+import {
+  normalizeSectionLabels,
+  isGuitarTab,
+  extractEmbeddedMeta,
+  normalizeCapo,
+  ImportError,
+} from "./shared.js";
 import { isChordPro, convertChordPro, extractChordProMeta } from "./chordpro.js";
 
 // Dedicated, domain-specific importers, checked in order. The generic
@@ -42,6 +48,17 @@ export function parseHtml(hostname, html) {
   let title = song.title || "";
   let artist = song.artist || "";
   let musicKey = song.musicKey || "";
+  let capo = song.capo || "";
+  let bpm = song.bpm || "";
+
+  // Reject ASCII guitar/bass tablature — ChordNote renders chord-over-lyric
+  // charts, not fret tabs, so importing a tab produces unusable garbage.
+  if (isGuitarTab(chart)) {
+    throw new ImportError(
+      "UNSUPPORTED_TAB",
+      "That looks like a guitar tab (fret tablature), which ChordNote can't import. Try a chords page instead.",
+    );
+  }
 
   // If the fetched chart is ChordPro, convert it to the two-line format
   // and lift any {title}/{artist}/{key} directives when the importer
@@ -54,8 +71,20 @@ export function parseHtml(hostname, html) {
     chart = convertChordPro(chart);
   }
 
+  // Strip embedded header metadata (Capo:/Key:/Tuning:/Tempo:) out of the
+  // chart body so it doesn't land in the lyrics, and lift useful values
+  // into meta when the importer didn't already provide them.
+  const { chart: strippedChart, meta: embedded } = extractEmbeddedMeta(chart);
+  chart = strippedChart;
+  if (!musicKey && embedded.musicKey) musicKey = embedded.musicKey;
+  if (!capo && embedded.capo) capo = embedded.capo;
+  if (!bpm && embedded.bpm) bpm = embedded.bpm;
+
+  // Normalize capo ("2nd fret" → "2", "No capo" → "").
+  capo = normalizeCapo(capo);
+
   // Always normalize section labels to consistent [brackets].
   chart = normalizeSectionLabels(chart);
 
-  return { ...song, title, artist, musicKey, chordChart: chart };
+  return { ...song, title, artist, musicKey, capo, bpm, chordChart: chart };
 }

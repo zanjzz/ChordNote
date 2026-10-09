@@ -1,0 +1,11 @@
+﻿===== TAB (should reject UNSUPPORTED_TAB) =====
+URL: https://tabs.ultimate-guitar.com/tab/led-zeppelin/stairway-to-heaven-tabs-9488
+STATUS=422
+
+
+===== CHORDS (should import, key in meta) =====
+URL: https://tabs.ultimate-guitar.com/tab/the-marias/no-one-noticed-chords-5718204
+STATUS=502
+
+
+

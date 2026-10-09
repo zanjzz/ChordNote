@@ -1,6 +1,6 @@
 // src/components/LyricsPanel.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Plus, Check, X, Maximize2, ExternalLink } from "lucide-react";
+import { Plus, Check, X, Maximize2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { SECTION_PRESETS } from "../utils/sectionHelpers";
 import { useResizableHeight } from "../hooks/useResizableHeight.js";
 import { useAutoScroll } from "../hooks/useAutoScroll.js";
@@ -17,10 +17,17 @@ export default function LyricsPanel({
   inModal = false,
   onToggleFullscreen,
   onOpenPage,
+  // When true the desktop label chips are suppressed here — the parent
+  // renders them in a shared row with the action bar on desktop.
+  // Mobile chips (collapsible trigger) are always rendered here.
+  hideDesktopChips = false,
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [hoveredSection, setHoveredSection] = useState(null);
+  // Mobile only: label chips are collapsed by default.
+  // On desktop this state is irrelevant — chips always show via CSS.
+  const [mobileLabelsExpanded, setMobileLabelsExpanded] = useState(false);
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
@@ -61,6 +68,133 @@ export default function LyricsPanel({
   const lineCount = lyrics.split("\n").length;
   const lineHeightPx = editorFontSize * 1.9;
 
+  // The chips + custom input — same markup used in both desktop (always
+  // visible) and mobile (shown/hidden by the expand toggle).
+  const labelChips = (
+    <div
+      style={{
+        display: "flex",
+        gap: "6px",
+        flexWrap: "wrap",
+      }}
+    >
+      {SECTION_PRESETS.map((label) => (
+        <button
+          key={label}
+          onClick={() => runAddSection(label)}
+          onMouseEnter={() => setHoveredSection(label)}
+          onMouseLeave={() => setHoveredSection(null)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "5px 10px",
+            fontSize: "12px",
+            borderRadius: "6px",
+            border: `1px solid ${
+              hoveredSection === label ? theme.text : theme.border
+            }`,
+            background: theme.panel,
+            color: theme.textSecondary,
+            cursor: "pointer",
+            transition: "border-color 0.15s ease",
+          }}
+        >
+          <Plus size={11} /> {label}
+        </button>
+      ))}
+
+      {/* Custom section */}
+      {!customOpen ? (
+        <button
+          onClick={() => setCustomOpen(true)}
+          onMouseEnter={() => setHoveredSection("custom")}
+          onMouseLeave={() => setHoveredSection(null)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "5px 10px",
+            fontSize: "12px",
+            borderRadius: "6px",
+            border: `1px dashed ${
+              hoveredSection === "custom" ? theme.text : theme.border
+            }`,
+            background: "transparent",
+            color: theme.textMuted,
+            cursor: "pointer",
+            transition: "border-color 0.15s ease",
+          }}
+        >
+          <Plus size={11} /> Custom
+        </button>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+          <input
+            autoFocus
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitCustomSection();
+              if (e.key === "Escape") {
+                setCustomOpen(false);
+                setCustomValue("");
+              }
+            }}
+            placeholder="Section name"
+            style={{
+              fontSize: "12px",
+              padding: "5px 8px",
+              borderRadius: "6px",
+              border: `1px solid ${theme.border}`,
+              background: theme.panel,
+              color: theme.text,
+              outline: "none",
+              width: "120px",
+            }}
+          />
+          <button
+            onClick={submitCustomSection}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "5px",
+              border: `1px solid ${chordColor}`,
+              background: "transparent",
+              color: chordColor,
+              cursor: "pointer",
+            }}
+          >
+            <Check size={12} />
+          </button>
+          <button
+            onClick={() => {
+              setCustomOpen(false);
+              setCustomValue("");
+            }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "24px",
+              height: "24px",
+              borderRadius: "5px",
+              border: `1px solid ${theme.border}`,
+              background: "transparent",
+              color: theme.textMuted,
+              cursor: "pointer",
+            }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div
       style={
@@ -69,6 +203,7 @@ export default function LyricsPanel({
           : undefined
       }
     >
+      {/* Panel header */}
       <div
         style={{
           display: "flex",
@@ -148,6 +283,7 @@ export default function LyricsPanel({
         </div>
       </div>
 
+      {/* Textarea + optional gutter */}
       <div
         style={{
           position: "relative",
@@ -219,6 +355,7 @@ export default function LyricsPanel({
         />
       </div>
 
+      {/* Resize handle (non-modal only) */}
       {!inModal && (
         <div
           onMouseDown={startDragging}
@@ -248,128 +385,71 @@ export default function LyricsPanel({
         </div>
       )}
 
-      <div
-        style={{
-          display: "flex",
-          gap: "6px",
-          marginTop: "10px",
-          flexWrap: "wrap",
-          flexShrink: 0,
-        }}
-      >
-        {SECTION_PRESETS.map((label) => (
-          <button
-            key={label}
-            onClick={() => runAddSection(label)}
-            onMouseEnter={() => setHoveredSection(label)}
-            onMouseLeave={() => setHoveredSection(null)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              padding: "5px 10px",
-              fontSize: "12px",
-              borderRadius: "6px",
-              border: `1px solid ${
-                hoveredSection === label ? theme.text : theme.border
-              }`,
-              background: theme.panel,
-              color: theme.textSecondary,
-              cursor: "pointer",
-              transition: "border-color 0.15s ease",
-            }}
-          >
-            <Plus size={11} /> {label}
-          </button>
-        ))}
-        {!customOpen ? (
-          <button
-            onClick={() => setCustomOpen(true)}
-            onMouseEnter={() => setHoveredSection("custom")}
-            onMouseLeave={() => setHoveredSection(null)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              padding: "5px 10px",
-              fontSize: "12px",
-              borderRadius: "6px",
-              border: `1px dashed ${
-                hoveredSection === "custom" ? theme.text : theme.border
-              }`,
-              background: "transparent",
-              color: theme.textMuted,
-              cursor: "pointer",
-              transition: "border-color 0.15s ease",
-            }}
-          >
-            <Plus size={11} /> Custom
-          </button>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <input
-              autoFocus
-              value={customValue}
-              onChange={(e) => setCustomValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") submitCustomSection();
-                if (e.key === "Escape") {
-                  setCustomOpen(false);
-                  setCustomValue("");
-                }
-              }}
-              placeholder="Section name"
-              style={{
-                fontSize: "12px",
-                padding: "5px 8px",
-                borderRadius: "6px",
-                border: `1px solid ${theme.border}`,
-                background: theme.panel,
-                color: theme.text,
-                outline: "none",
-                width: "120px",
-              }}
-            />
-            <button
-              onClick={submitCustomSection}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "24px",
-                height: "24px",
-                borderRadius: "5px",
-                border: `1px solid ${chordColor}`,
-                background: "transparent",
-                color: chordColor,
-                cursor: "pointer",
-              }}
-            >
-              <Check size={12} />
-            </button>
-            <button
-              onClick={() => {
-                setCustomOpen(false);
-                setCustomValue("");
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "24px",
-                height: "24px",
-                borderRadius: "5px",
-                border: `1px solid ${theme.border}`,
-                background: "transparent",
-                color: theme.textMuted,
-                cursor: "pointer",
-              }}
-            >
-              <X size={12} />
-            </button>
+      {/* ── Section label chips ──────────────────────────────────────────
+          Desktop (>768px): when hideDesktopChips=true the desktop chips
+          are rendered externally alongside the action bar. Otherwise shown
+          here normally. Mobile chips (collapsible) always rendered here.
+      ────────────────────────────────────────────────────────────────── */}
+      <div style={{ marginTop: "10px", flexShrink: 0 }}>
+
+        {/* DESKTOP — shown unless parent renders them externally */}
+        {!hideDesktopChips && (
+          <div className="lyricspanel-labels-desktop">
+            {labelChips}
           </div>
         )}
-      </div>
+
+          {/* MOBILE — collapsed trigger */}
+          <div className="lyricspanel-labels-mobile-trigger">
+            {!mobileLabelsExpanded ? (
+              <button
+                onClick={() => setMobileLabelsExpanded(true)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 0",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: theme.textMuted,
+                  fontSize: "12px",
+                  fontWeight: 500,
+                }}
+              >
+                <ChevronDown size={13} />
+                Show label samples
+              </button>
+            ) : (
+              /* MOBILE — expanded: chips inline, close arrow bottom-right */
+              <div>
+                {labelChips}
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "6px" }}>
+                  <button
+                    onClick={() => {
+                      setMobileLabelsExpanded(false);
+                      setCustomOpen(false);
+                      setCustomValue("");
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "3px 0",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: theme.textMuted,
+                      fontSize: "11px",
+                    }}
+                  >
+                    <ChevronUp size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
     </div>
   );
 }

@@ -25,6 +25,8 @@ function friendlyError(err) {
       return "That link doesn't look right. Double-check it and try again.";
     case "UNSUPPORTED":
       return "That link isn't a page we can read chords from.";
+    case "UNSUPPORTED_TAB":
+      return "That looks like a guitar tab (fret tablature), which ChordNote can't import. Try a chords page instead.";
     case "SITE_UNAVAILABLE":
       return "We couldn't reach that website. It may be down or blocking imports — try again, or use the Paste Text tab.";
     case "NO_CHORD_DATA":

@@ -17,6 +17,8 @@ const ERROR_MESSAGES = {
   INVALID_REQUEST: "Something went wrong with the request. Please try again.",
   INVALID_URL: "That doesn't look like a valid link.",
   UNSUPPORTED: "That link isn't a web page ChordNote can read.",
+  UNSUPPORTED_TAB:
+    "That looks like a guitar tab (fret tablature), which ChordNote can't import. Try a chords page instead.",
   SITE_UNAVAILABLE:
     "Couldn't reach that website. It may be down or blocking imports.",
   NO_CHORD_DATA:

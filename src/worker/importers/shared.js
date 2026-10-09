@@ -159,6 +159,100 @@ export function normalizeSectionLabels(text = "") {
     .join("\n");
 }
 
+/**
+ * Is this line a section label? A bracketed line (e.g. "[Chorus]") after
+ * normalization, or a plain-text section header keyword. Used to detect
+ * where the song body begins so embedded header metadata can be stripped.
+ */
+export function isSectionLabel(line = "") {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (/^\[.+\]$/.test(trimmed)) return true;
+  return SECTION_LINE_REGEX.test(trimmed);
+}
+
+// A single ASCII guitar/bass tablature line, e.g.
+//   e|---5-7-----7-|-8-----8-2-----2-|
+//   G|-----5-------5---|
+// Starts with a string-name letter + a bar, then mostly dashes/digits/bars.
+const TAB_LINE_REGEX = /^\s*[eADGBE]\s*\|[-0-9hpb/\\~x|().\s]{4,}$/;
+
+/**
+ * Is this chart predominantly ASCII guitar tablature rather than a
+ * chord-over-lyrics sheet? ChordNote renders chord charts, not fret tabs,
+ * so we detect and reject tab-heavy content. Threshold: if a meaningful
+ * share of the non-empty lines look like tab staves, treat it as a tab.
+ */
+export function isGuitarTab(text = "") {
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) return false;
+  const tabLines = lines.filter((l) => TAB_LINE_REGEX.test(l)).length;
+  // Tab staves come in groups of ~6; even a 25% share is a strong signal.
+  return tabLines >= 4 && tabLines / lines.length >= 0.25;
+}
+
+// Header/metadata lines frequently embedded at the top of chord charts:
+//   "Capo: 2nd fret", "Key: G", "Tuning: E A D G B E", "Tempo: 92 BPM"
+// Captured so we can both STRIP them from the body and lift useful ones
+// (key, capo, tempo) into the song's meta fields.
+const META_LINE_PATTERNS = [
+  { field: "musicKey", re: /^\s*key\s*[:\-]\s*(.+?)\s*$/i },
+  { field: "capo", re: /^\s*capo\s*[:\-]\s*(.+?)\s*$/i },
+  { field: "bpm", re: /^\s*(?:tempo|bpm)\s*[:\-]\s*(.+?)\s*$/i },
+  { field: null, re: /^\s*tuning\s*[:\-]\s*.+$/i }, // strip, don't store
+  { field: null, re: /^\s*(?:difficulty|author|artist|song)\s*[:\-]\s*.+$/i },
+];
+
+/**
+ * Pulls embedded metadata header lines out of a chord chart. Returns
+ * { chart, meta } where `chart` has those lines removed and `meta` holds
+ * any key/capo/bpm found (only fields not already known are filled by the
+ * caller). Only strips header lines that appear BEFORE the first section
+ * label or chord/lyric content, so a mid-song "Key change" note isn't
+ * accidentally removed.
+ */
+export function extractEmbeddedMeta(text = "") {
+  const lines = text.split("\n");
+  const meta = {};
+  const kept = [];
+  let inBody = false;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Once we hit real content (a section label or a non-meta non-empty
+    // line), stop treating lines as header metadata.
+    if (!inBody && trimmed && !isSectionLabel(line)) {
+      const matched = META_LINE_PATTERNS.find((p) => p.re.test(trimmed));
+      if (matched) {
+        if (matched.field && meta[matched.field] == null) {
+          const m = trimmed.match(matched.re);
+          if (m && m[1]) meta[matched.field] = m[1].trim();
+        }
+        continue; // strip this header line from the body
+      }
+      // First real content line → body starts here.
+      inBody = true;
+    }
+    kept.push(line);
+  }
+
+  return { chart: kept.join("\n"), meta };
+}
+
+/**
+ * Normalize a capo value to a short string of fret number, e.g.
+ * "2nd fret" → "2", "Capo 3" → "3", "No capo" → "". Leaves already-numeric
+ * values intact.
+ */
+export function normalizeCapo(raw) {
+  if (raw == null || raw === "") return "";
+  const s = String(raw).toLowerCase();
+  if (/no\s*capo|none/.test(s)) return "";
+  const m = s.match(/\d+/);
+  return m ? m[0] : "";
+}
+
 /** A consistent shape so callers never deal with undefined fields. */
 export function makeSong({
   title = "",

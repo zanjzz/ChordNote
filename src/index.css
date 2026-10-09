@@ -205,7 +205,7 @@ body {
 
 .chord-action-bar > button {
   width: 100%;
-  padding: 7px 14px !important;
+  padding: 10px 18px !important;
   transition: background 0.15s ease, transform 0.1s ease;
 }
 
@@ -228,6 +228,19 @@ body {
 .chord-copy-menu {
   animation: chordCopyMenuIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   transform-origin: bottom right;
+}
+
+/* ============================================================
+   LYRICS PANEL — label chips visibility
+   Desktop: always show chips, never show mobile toggle.
+   Mobile (≤768px): hide chips, show the expand/collapse trigger.
+   ============================================================ */
+.lyricspanel-labels-desktop       { display: block; }
+.lyricspanel-labels-mobile-trigger { display: none;  }
+
+@media (max-width: 768px) {
+  .lyricspanel-labels-desktop       { display: none  !important; }
+  .lyricspanel-labels-mobile-trigger { display: block !important; }
 }
 
 /* ============================================================
