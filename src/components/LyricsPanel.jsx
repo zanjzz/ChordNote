@@ -27,7 +27,7 @@ export default function LyricsPanel({
   const [hoveredSection, setHoveredSection] = useState(null);
   // Mobile only: label chips are collapsed by default.
   // On desktop this state is irrelevant — chips always show via CSS.
-  const [mobileLabelsExpanded, setMobileLabelsExpanded] = useState(false);
+  const [mobileLabelsExpanded, setMobileLabelsExpanded] = useState(true);
   const gutterRef = useRef(null);
   const textareaRef = useRef(null);
   const { height, startDragging } = useResizableHeight(380, { min: 180 });
